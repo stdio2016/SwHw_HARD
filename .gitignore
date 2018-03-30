@@ -4,7 +4,9 @@ SwHw_HARD.xpr
 SwHw_HARD.hw
 SwHw_HARD.srcs
 SwHw_HARD.ip_user_files
+SwHw_HARD.sdk
 *.jou
 *.log
 vivado_pid*
 .Xli
+Packages
