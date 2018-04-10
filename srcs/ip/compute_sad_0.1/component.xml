@@ -644,6 +644,10 @@
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
+        <spirit:name>hdl/sad.v</spirit:name>
+        <spirit:fileType>verilogSource</spirit:fileType>
+      </spirit:file>
+      <spirit:file>
         <spirit:name>hdl/compute_sad_v0_1.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
         <spirit:userFileType>CHECKSUM_328c7f69</spirit:userFileType>
@@ -653,6 +657,10 @@
       <spirit:name>xilinx_verilogbehavioralsimulation_view_fileset</spirit:name>
       <spirit:file>
         <spirit:name>hdl/compute_sad_v0_1_S00_AXI.v</spirit:name>
+        <spirit:fileType>verilogSource</spirit:fileType>
+      </spirit:file>
+      <spirit:file>
+        <spirit:name>hdl/sad.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
@@ -776,7 +784,7 @@
       </xilinx:taxonomies>
       <xilinx:displayName>compute_sad_v0.1</xilinx:displayName>
       <xilinx:coreRevision>1</xilinx:coreRevision>
-      <xilinx:coreCreationDateTime>2018-04-03T08:40:18Z</xilinx:coreCreationDateTime>
+      <xilinx:coreCreationDateTime>2018-04-10T08:55:58Z</xilinx:coreCreationDateTime>
       <xilinx:tags>
         <xilinx:tag xilinx:name="xilinx.com:user:compute_sad:0.1_ARCHIVE_LOCATION">c:/Users/User/Documents/HW/hard/SwHw_HARD/srcs/ip/compute_sad_0.1</xilinx:tag>
         <xilinx:tag xilinx:name="stdio2016:user:compute_sad:0.1_ARCHIVE_LOCATION">c:/Users/User/Documents/HW/hard/SwHw_HARD/srcs/ip/compute_sad_0.1</xilinx:tag>

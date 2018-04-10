@@ -121,7 +121,7 @@
 	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg14;
 	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg15;
 	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg16;
-	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg17;
+	wire [C_S_AXI_DATA_WIDTH-1:0]	slv_reg17;
 	wire	 slv_reg_rden;
 	wire	 slv_reg_wren;
 	reg [C_S_AXI_DATA_WIDTH-1:0]	 reg_data_out;
@@ -251,7 +251,6 @@
 	      slv_reg14 <= 0;
 	      slv_reg15 <= 0;
 	      slv_reg16 <= 0;
-	      slv_reg17 <= 0;
 	    end 
 	  else begin
 	    if (slv_reg_wren)
@@ -379,9 +378,7 @@
 	          5'h11:
 	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
 	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
-	                // Respective byte enables are asserted as per write strobes 
-	                // Slave register 17
-	                slv_reg17[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
+	                // register 17 cannot be written
 	              end  
 	          default : begin
 	                      slv_reg0 <= slv_reg0;
@@ -401,10 +398,11 @@
 	                      slv_reg14 <= slv_reg14;
 	                      slv_reg15 <= slv_reg15;
 	                      slv_reg16 <= slv_reg16;
-	                      slv_reg17 <= slv_reg17;
 	                    end
 	        endcase
 	      end
+	      else // update hw_active
+	      slv_reg15 <= !sad_finish;
 	  end
 	end    
 
@@ -552,7 +550,15 @@
 	end    
 
 	// Add user logic here
-
+	wire sad_finish;
+    sad UserModule1(
+        .face({slv_reg0, slv_reg1, slv_reg2, slv_reg3, slv_reg4, slv_reg5, slv_reg6, slv_reg7}),
+        .group({slv_reg8, slv_reg9, slv_reg10, slv_reg11, slv_reg12, slv_reg13, slv_reg14, slv_reg15}),
+        .sad_result(slv_reg17),
+        .start(slv_reg16[0]),
+        .finish(sad_finish),
+        .clock(S_AXI_ACLK)
+    );
 	// User logic ends
 
 	endmodule
