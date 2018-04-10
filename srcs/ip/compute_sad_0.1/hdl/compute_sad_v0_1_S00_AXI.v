@@ -402,7 +402,7 @@
 	        endcase
 	      end
 	      else // update hw_active
-	      slv_reg15 <= !sad_finish;
+	      if (sad_finish) slv_reg15 <= 0;
 	  end
 	end    
 
