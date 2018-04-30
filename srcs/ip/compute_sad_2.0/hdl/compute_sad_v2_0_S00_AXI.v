@@ -562,6 +562,7 @@
     sad_finish <= MyMod01_Finish;
   end
   
+	assign slv_reg10 = min_sad;
 	// User logic ends
 
 	endmodule
