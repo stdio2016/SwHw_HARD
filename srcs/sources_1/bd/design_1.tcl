@@ -44,7 +44,6 @@ if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
 set list_projs [get_projects -quiet]
 if { $list_projs eq "" } {
    create_project project_1 myproj -part xc7z020clg484-1
-   set_property BOARD_PART em.avnet.com:zed:part0:1.3 [current_project]
 }
 
 
@@ -160,7 +159,10 @@ proc create_root_design { parentCell } {
   # Create ports
 
   # Create instance: compute_sad_0, and set properties
-  set compute_sad_0 [ create_bd_cell -type ip -vlnv xilinx.com:user:compute_sad:1.0 compute_sad_0 ]
+  set compute_sad_0 [ create_bd_cell -type ip -vlnv xilinx.com:user:compute_sad:2.0 compute_sad_0 ]
+  set_property -dict [ list \
+CONFIG.C_S00_AXI_ADDR_WIDTH {6} \
+ ] $compute_sad_0
 
   # Create instance: processing_system7_0, and set properties
   set processing_system7_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:5.5 processing_system7_0 ]
@@ -207,4 +209,6 @@ CONFIG.NUM_MI {1} \
 
 create_root_design ""
 
+
+common::send_msg_id "BD_TCL-1000" "WARNING" "This Tcl script was generated from a block design that has not been validated. It is possible that design <$design_name> may result in errors during validation."
 
