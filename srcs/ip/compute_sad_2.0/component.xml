@@ -813,8 +813,8 @@
         <xilinx:taxonomy>AXI_Peripheral</xilinx:taxonomy>
       </xilinx:taxonomies>
       <xilinx:displayName>compute_sad_v2.0</xilinx:displayName>
-      <xilinx:coreRevision>6</xilinx:coreRevision>
-      <xilinx:coreCreationDateTime>2018-04-30T19:23:31Z</xilinx:coreCreationDateTime>
+      <xilinx:coreRevision>8</xilinx:coreRevision>
+      <xilinx:coreCreationDateTime>2018-04-30T19:30:18Z</xilinx:coreCreationDateTime>
       <xilinx:tags>
         <xilinx:tag xilinx:name="xilinx.com:user:compute_sad:2.0_ARCHIVE_LOCATION">c:/Users/User/Documents/HW/hard/SwHw_HARD/srcs/ip/compute_sad_2.0</xilinx:tag>
       </xilinx:tags>
