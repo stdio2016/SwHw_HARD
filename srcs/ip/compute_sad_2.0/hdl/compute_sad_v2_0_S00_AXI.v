@@ -480,6 +480,7 @@
 	reg [8*32-1:0] face;
 	reg [8*32-1:0] group;
 	wire [31:0] sad_result;
+  reg [31:0] min_sad;
 	
 	wire [8*32-1:0] R0_R7 = {
 		slv_reg7, slv_reg6, slv_reg5, slv_reg4,
@@ -487,15 +488,23 @@
 	};
 	wire select = slv_reg9[4:0];
 	reg [4:0] rotate;
-	reg sad_start, sad_finish;
+	reg sad_start;
   reg [2:0] state;
-  localparam Idle = 0, Run = 1, Wait = 2, Finish = 3;
+  localparam
+    Idle = 0,
+    Run = 1,
+    RunAdd = 2,
+    Wait = 3;
+  reg lastRun;
+  wire MyMod01_Finish;
+  reg sad_finish;
 	
 	always @(posedge S_AXI_ACLK) begin
 		face <= Face_mem[rotate];
 		group <= Group_mem[select + rotate];
 		if (slv_reg9[5] == 1) Face_mem[select] <= R0_R7;
 		else Group_mem[select] <= R0_R7;
+    lastRun <= rotate == 31;
 	end
 	
 	sad MyMod01(
@@ -503,8 +512,8 @@
 		.face(face),
 		.group(group),
 		.sad_result(sad_result),
-		.start(),
-		.finish()
+		.start(lastRun),
+		.finish(MyMod01_Finish)
 	);
 	
 	always @( posedge S_AXI_ACLK ) begin
@@ -529,8 +538,28 @@
 		end
 	end
 	
+  always @(posedge S_AXI_ACLK)
+  if ( S_AXI_ARESETN == 1'b0 ) begin
+    state <= Idle;
+  end else case (state)
+    Idle: state <= sad_start ? Run : Idle;
+    Run: state <= rotate == 4 ? RunAdd : Run;
+    RunAdd: state <= rotate == 31 ? Wait : RunAdd;
+    Wait: state <= MyMod01_Finish ? Idle : Wait;
+  endcase
+  
   always @(posedge S_AXI_ACLK) begin
-    
+    if (S_AXI_ARESETN == 1'b0) begin
+      rotate <= 0;
+      min_sad <= 0;
+    end else begin
+      if (state == Run || state == RunAdd) rotate <= rotate + 1;
+      else rotate <= 0;
+      if (state == RunAdd || state == Wait) min_sad <= min_sad + sad_result;
+      else if (state == Run) min_sad <= 0;
+      else min_sad <= min_sad;
+    end
+    sad_finish <= MyMod01_Finish;
   end
   
 	// User logic ends
