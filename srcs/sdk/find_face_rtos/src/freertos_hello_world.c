@@ -205,26 +205,29 @@ int32 compute_sad(uint8 *image1, int w1, uint8 *image2, int w2, int h2,
     return sad;
 }
 
+volatile char *group = (char *) (SAD_ADDR);
+volatile int *reg_bank = (int *) (SAD_ADDR + 32);
+volatile int *hw_active = (int *) (SAD_ADDR + 36);
+volatile int *result = (int *) (SAD_ADDR + 40);
+
 int32 compute_sad_hw(uint8 *image1, int w1, uint8 *image2, int w2, int h2,
                   int row, int col, int minsad)
 {
-	volatile char *face = (char *) SAD_ADDR;
-	volatile char *group = (char *) (SAD_ADDR + 32);
-	volatile int *hw_active = (int *) (SAD_ADDR + 64);
-	volatile int *result = (int *) (SAD_ADDR + 68);
     int y;
     int32 sad = 0;
 
-    for (y = 0; y < h2; y++)
-    {
-        memmove(group, image1+(row+y)*w1+col, 32);
-        memmove(face, image2+y*w2, 32);
-        *hw_active = 1;
-        while (*hw_active == 1) ; // busy wait
-
-        sad += *result;
-        if (sad > minsad) return INT32_MAX;
+    if (row == 0) {
+        for (y = 0; y < h2; y++)
+        {
+            *reg_bank = y;
+            memmove(group, image1+(row+y)*w1+col, 32);
+        }
     }
+    *reg_bank = row & 15;
+    memmove(group, image1+row*w1+col, 32);
+    *hw_active = 1;
+	while (*hw_active == 1) ; // busy wait
+    sad = *result;
     return sad;
 }
 
@@ -234,9 +237,14 @@ int32 match(CImage *group, CImage *face, int *posx, int *posy)
     int32  sad, min_sad;
 
     min_sad = 256*face->width*face->height;
-    for (row = 0; row < group->height-face->height; row++)
+    for (row = 0; row < face->height; row++) {
+        *reg_bank = row + 32;
+        memmove(group, face->pix + row * face->width, face->width);
+    }
+
+    for (col = 0; col < group->width-face->width; col++)
     {
-        for (col = 0; col < group->width-face->width; col++)
+        for (row = 0; row < group->height-face->height; row++)
         {
             /* trying to compute the matching cost at (col, row) */
             sad = compute_sad_hw(group->pix, group->width,
@@ -250,7 +258,7 @@ int32 match(CImage *group, CImage *face, int *posx, int *posy)
                 *posx = col, *posy = row;
             }
         }
-
+        break;
     }
     return min_sad;
 }
