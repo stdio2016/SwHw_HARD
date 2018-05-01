@@ -486,7 +486,8 @@
 		slv_reg7, slv_reg6, slv_reg5, slv_reg4,
 		slv_reg3, slv_reg2, slv_reg1, slv_reg0
 	};
-	wire [4:0] select = slv_reg8[4:0];
+	wire [5:0] reg_bank = slv_reg8;
+	wire [4:0] select = reg_bank[4:0];
 	reg [4:0] rotate;
 	reg sad_start;
   reg [2:0] state;
@@ -502,7 +503,7 @@
 	always @(posedge S_AXI_ACLK) begin
 		face <= Face_mem[rotate];
 		group <= Group_mem[select + rotate];
-		if (slv_reg9[5] == 1) Face_mem[select] <= R0_R7;
+		if (reg_bank[5] == 1) Face_mem[select] <= R0_R7;
 		else Group_mem[select] <= R0_R7;
     lastRun <= rotate == 31;
 	end

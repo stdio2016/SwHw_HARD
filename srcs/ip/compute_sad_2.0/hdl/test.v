@@ -62,6 +62,7 @@ initial begin
   @(posedge clock);
   reset <= 1;
   @(posedge clock);
+  // write face
   for (i = 0; i < 32; i=i+1) begin
     write(8, i+32);
     for (j = 0; j < 8; j=j+1) begin
@@ -70,6 +71,28 @@ initial begin
       write(j, wri);
     end
   end
+  
+  // write group
+  for (i = 0; i < 32; i=i+1) begin
+    write(8, i);
+    for (j = 0; j < 8; j=j+1) begin
+      if (i>>2 == j) wri = 1 << ((i-j*4) * 8);
+      else wri = 0;
+      write(j, wri);
+    end
+  end
+  // write single row
+  i = 0;
+  write(8, i);
+  for (j = 0; j < 8; j=j+1) begin
+    if (i>>2 == j) wri = 1 << ((i-j*4) * 8);
+    else wri = 0;
+    write(j, wri);
+  end
+  
+  // simulate run
+  
+  write(9, 1);
 end
 
 endmodule
