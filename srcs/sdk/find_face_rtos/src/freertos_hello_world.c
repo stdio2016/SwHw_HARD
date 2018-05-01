@@ -13,11 +13,6 @@
 /*  Hsinchu, 30010, Taiwan.                                              */
 /* ///////////////////////////////////////////////////////////////////// */
 
-/* FreeRTOS includes. */
-#include "FreeRTOS.h"
-#include "task.h"
-#include "queue.h"
-#include "timers.h"
 /* Xilinx includes. */
 #include "xil_printf.h"
 #include "xparameters.h"
@@ -28,18 +23,7 @@
 #define TIMER_CHECK_THRESHOLD	9
 /*-----------------------------------------------------------*/
 
-/* The Tx and Rx tasks as described at the top of this file. */
-static void prvTxTask( void *pvParameters );
-static void prvRxTask( void *pvParameters );
-static void vTimerCallback( TimerHandle_t pxTimer );
-/*-----------------------------------------------------------*/
 
-/* The queue used by the Tx and Rx tasks, as described at the top of this
-file. */
-static TaskHandle_t xTxTask;
-static TaskHandle_t xRxTask;
-static QueueHandle_t xQueue = NULL;
-static TimerHandle_t xTimer = NULL;
 char HWstring[15] = "Hello World";
 long RxtaskCntr = 0;
 
@@ -223,7 +207,9 @@ int32 compute_sad_hw(uint8 *image1, int w1, uint8 *image2, int w2, int h2,
             memmove(R0_R7, image1+y*w1+col, 32);
         }
     }
-    *reg_bank = row & 15;
+    *reg_bank = (row-1) & 31;
+    memmove(R0_R7, image1+(row+31)*w1+col, 32);
+    *reg_bank = row & 31;
     memmove(R0_R7, image1+row*w1+col, 32);
     *hw_active = 1;
 	while (*hw_active == 1) ; // busy wait
@@ -250,6 +236,11 @@ int32 match(CImage *group, CImage *face, int *posx, int *posy)
             sad = compute_sad_hw(group->pix, group->width,
                               face->pix, face->width, face->height,
                               row, col);
+            // software check
+            //int sad2 = compute_sad(group->pix, group->width, face->pix, face->width, face->height, row, col);
+            //if (sad != sad2) {
+            //    printf("compute error at x=%d y=%d %d %d\n", row, col, sad, sad2);
+            //}
 
             /* if the matching cost is minimal, record it */
             if (sad <= min_sad)
@@ -257,9 +248,7 @@ int32 match(CImage *group, CImage *face, int *posx, int *posy)
                 min_sad = sad;
                 *posx = col, *posy = row;
             }
-            break;
         }
-        break;
     }
     return min_sad;
 }
