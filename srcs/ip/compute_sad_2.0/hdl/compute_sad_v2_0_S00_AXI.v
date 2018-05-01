@@ -475,21 +475,21 @@
 	end    
 
 	// Add user logic here
-	reg [8*32-1:0] Face_mem[0:31];
-	reg [8*32-1:0] Group_mem[0:31];
-	reg [8*32-1:0] face;
-	reg [8*32-1:0] group;
-	wire [31:0] sad_result;
+  reg [8*32-1:0] Face_mem[0:31];
+  reg [8*32-1:0] Group_mem[0:31];
+  reg [8*32-1:0] face;
+  reg [8*32-1:0] group;
+  wire [31:0] sad_result;
   reg [31:0] min_sad;
-	
-	wire [8*32-1:0] R0_R7 = {
-		slv_reg7, slv_reg6, slv_reg5, slv_reg4,
-		slv_reg3, slv_reg2, slv_reg1, slv_reg0
-	};
-	wire [5:0] reg_bank = slv_reg8;
-	wire [4:0] select = reg_bank[4:0];
-	reg [4:0] rotate;
-	reg sad_start;
+
+  wire [8*32-1:0] R0_R7 = {
+    slv_reg7, slv_reg6, slv_reg5, slv_reg4,
+    slv_reg3, slv_reg2, slv_reg1, slv_reg0
+  };
+  wire [5:0] reg_bank = slv_reg8;
+  wire [4:0] select = reg_bank[4:0];
+  reg [4:0] rotate;
+  reg sad_start;
   reg [2:0] state;
   localparam
     Idle = 0,
@@ -499,46 +499,46 @@
   reg lastRun;
   wire MyMod01_Finish;
   reg sad_finish;
-	
-	always @(posedge S_AXI_ACLK) begin
-		face <= Face_mem[rotate];
-		group <= Group_mem[select + rotate];
-		if (reg_bank[5] == 1) Face_mem[select] <= R0_R7;
-		else Group_mem[select] <= R0_R7;
+
+  always @(posedge S_AXI_ACLK) begin
+    face <= Face_mem[rotate];
+    group <= Group_mem[select + rotate];
+    if (reg_bank[5] == 1) Face_mem[select] <= R0_R7;
+    else Group_mem[select] <= R0_R7;
     lastRun <= rotate == 31;
-	end
-	
-	sad MyMod01(
-		.clock(S_AXI_ACLK),
-		.face(face),
-		.group(group),
-		.sad_result(sad_result),
-		.start(lastRun),
-		.finish(MyMod01_Finish)
-	);
-	
-	always @( posedge S_AXI_ACLK ) begin
-		sad_start <= 0;
-		if ( S_AXI_ARESETN == 1'b0 ) begin
-			slv_reg9 <= 0;
-		end
-		else begin
-			if (sad_finish) slv_reg9 <= 0;
-			if (slv_reg_wren) begin
-				case (axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB])
-				4'd9: begin
-					if (S_AXI_WDATA != 0) begin
-						sad_start <= 1;
-					end
-					slv_reg9 <= S_AXI_WDATA;
-				end
-				default:
-					slv_reg9 <= slv_reg9;
-				endcase
-			end
-		end
-	end
-	
+  end
+
+  sad MyMod01(
+    .clock(S_AXI_ACLK),
+    .face(face),
+    .group(group),
+    .sad_result(sad_result),
+    .start(lastRun),
+    .finish(MyMod01_Finish)
+  );
+
+  always @( posedge S_AXI_ACLK ) begin
+    sad_start <= 0;
+    if ( S_AXI_ARESETN == 1'b0 ) begin
+      slv_reg9 <= 0;
+    end
+    else begin
+      if (sad_finish) slv_reg9 <= 0;
+      if (slv_reg_wren) begin
+        case (axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB])
+        4'd9: begin
+          if (S_AXI_WDATA != 0) begin
+            sad_start <= 1;
+          end
+        slv_reg9 <= S_AXI_WDATA;
+        end
+        default:
+          slv_reg9 <= slv_reg9;
+        endcase
+      end
+    end
+  end
+
   always @(posedge S_AXI_ACLK)
   if ( S_AXI_ARESETN == 1'b0 ) begin
     state <= Idle;
@@ -563,7 +563,7 @@
     sad_finish <= MyMod01_Finish;
   end
   
-	assign slv_reg10 = min_sad;
+  assign slv_reg10 = min_sad;
 	// User logic ends
 
 	endmodule
