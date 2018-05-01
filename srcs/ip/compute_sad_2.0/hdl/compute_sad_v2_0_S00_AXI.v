@@ -486,7 +486,7 @@
 		slv_reg7, slv_reg6, slv_reg5, slv_reg4,
 		slv_reg3, slv_reg2, slv_reg1, slv_reg0
 	};
-	wire select = slv_reg9[4:0];
+	wire [4:0] select = slv_reg8[4:0];
 	reg [4:0] rotate;
 	reg sad_start;
   reg [2:0] state;
