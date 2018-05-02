@@ -209,8 +209,8 @@ int32 compute_sad_hw(uint8 *image1, int w1, uint8 *image2, int w2, int h2,
     }
     *reg_bank = (row-1) & 31;
     memmove(R0_R7, image1+(row+31)*w1+col, 32);
-    *reg_bank = row & 31;
-    memmove(R0_R7, image1+row*w1+col, 32);
+    //*reg_bank = row & 31;
+    //memmove(R0_R7, image1+row*w1+col, 32);
     *hw_active = 1;
 	while (*hw_active == 1) ; // busy wait
     sad = *result;

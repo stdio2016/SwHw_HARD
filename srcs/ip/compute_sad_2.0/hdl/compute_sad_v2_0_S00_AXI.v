@@ -502,7 +502,7 @@
 
   always @(posedge S_AXI_ACLK) begin
     face <= Face_mem[rotate];
-    group <= Group_mem[select + rotate];
+    group <= Group_mem[(select+1 + rotate) & 5'b11111];
     if (reg_bank[5] == 1) Face_mem[select] <= R0_R7;
     else Group_mem[select] <= R0_R7;
     lastRun <= rotate == 31;
