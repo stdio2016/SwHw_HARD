@@ -17,3 +17,7 @@ source start.tcl
 9. 設定 find_face 專案的 project references，選取 `find_face_bsp`
 10. 設定 find_face_bsp 專案的 project references，選取 `design_1_wrapper_hw_platform_0`
 11. 耶！完成了
+
+## 作業 4
+
+匯入的專案在 `專案目錄/srcs/sdk/dmatest` 和 `專案目錄/srcs/sdk/dmatest_bsp`
