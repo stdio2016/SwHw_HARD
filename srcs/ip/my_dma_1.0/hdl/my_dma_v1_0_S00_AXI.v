@@ -15,7 +15,11 @@
 	)
 	(
 		// Users to add ports here
-
+    output wire                             hw_active,
+    output wire  [C_S_AXI_DATA_WIDTH-1:0]   dst_addr,
+    output wire  [C_S_AXI_DATA_WIDTH-1:0]   src_addr,
+    output wire  [C_S_AXI_DATA_WIDTH-1:0]   cpy_len,
+    input  wire                             hw_done,
 		// User ports ends
 		// Do not modify the ports beyond this line
 
@@ -265,6 +269,9 @@
 	                    end
 	        endcase
 	      end
+          else begin /* slv_reg_wren != 1'b1 */
+            slv_reg0 <= (hw_done)? 32'b0 : slv_reg0;
+          end
 	  end
 	end    
 
@@ -398,7 +405,10 @@
 	end    
 
 	// Add user logic here
-
+  assign hw_active = (| slv_reg0);
+  assign dst_addr = slv_reg1;
+  assign src_addr = slv_reg2;
+  assign cpy_len  = slv_reg3;
 	// User logic ends
 
 	endmodule

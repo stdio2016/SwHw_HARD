@@ -9,6 +9,10 @@
 		// Do not modify the parameters beyond this line
 
 
+		// Parameters of Axi Slave Bus Interface S00_AXI
+		parameter integer C_S00_AXI_DATA_WIDTH	= 32,
+		parameter integer C_S00_AXI_ADDR_WIDTH	= 4,
+
 		// Parameters of Axi Master Bus Interface M00_AXI
 		parameter  C_M00_AXI_TARGET_SLAVE_BASE_ADDR	= 32'h40000000,
 		parameter integer C_M00_AXI_BURST_LEN	= 16,
@@ -19,11 +23,7 @@
 		parameter integer C_M00_AXI_ARUSER_WIDTH	= 0,
 		parameter integer C_M00_AXI_WUSER_WIDTH	= 0,
 		parameter integer C_M00_AXI_RUSER_WIDTH	= 0,
-		parameter integer C_M00_AXI_BUSER_WIDTH	= 0,
-
-		// Parameters of Axi Slave Bus Interface S00_AXI
-		parameter integer C_S00_AXI_DATA_WIDTH	= 32,
-		parameter integer C_S00_AXI_ADDR_WIDTH	= 4
+		parameter integer C_M00_AXI_BUSER_WIDTH	= 0
 	)
 	(
 		// Users to add ports here
@@ -32,10 +32,30 @@
 		// Do not modify the ports beyond this line
 
 
+		// Ports of Axi Slave Bus Interface S00_AXI
+		input wire  s00_axi_aclk,
+		input wire  s00_axi_aresetn,
+		input wire [C_S00_AXI_ADDR_WIDTH-1 : 0] s00_axi_awaddr,
+		input wire [2 : 0] s00_axi_awprot,
+		input wire  s00_axi_awvalid,
+		output wire  s00_axi_awready,
+		input wire [C_S00_AXI_DATA_WIDTH-1 : 0] s00_axi_wdata,
+		input wire [(C_S00_AXI_DATA_WIDTH/8)-1 : 0] s00_axi_wstrb,
+		input wire  s00_axi_wvalid,
+		output wire  s00_axi_wready,
+		output wire [1 : 0] s00_axi_bresp,
+		output wire  s00_axi_bvalid,
+		input wire  s00_axi_bready,
+		input wire [C_S00_AXI_ADDR_WIDTH-1 : 0] s00_axi_araddr,
+		input wire [2 : 0] s00_axi_arprot,
+		input wire  s00_axi_arvalid,
+		output wire  s00_axi_arready,
+		output wire [C_S00_AXI_DATA_WIDTH-1 : 0] s00_axi_rdata,
+		output wire [1 : 0] s00_axi_rresp,
+		output wire  s00_axi_rvalid,
+		input wire  s00_axi_rready,
+
 		// Ports of Axi Master Bus Interface M00_AXI
-		input wire  m00_axi_init_axi_txn,
-		output wire  m00_axi_txn_done,
-		output wire  m00_axi_error,
 		input wire  m00_axi_aclk,
 		input wire  m00_axi_aresetn,
 		output wire [C_M00_AXI_ID_WIDTH-1 : 0] m00_axi_awid,
@@ -79,31 +99,41 @@
 		input wire  m00_axi_rlast,
 		input wire [C_M00_AXI_RUSER_WIDTH-1 : 0] m00_axi_ruser,
 		input wire  m00_axi_rvalid,
-		output wire  m00_axi_rready,
-
-		// Ports of Axi Slave Bus Interface S00_AXI
-		input wire  s00_axi_aclk,
-		input wire  s00_axi_aresetn,
-		input wire [C_S00_AXI_ADDR_WIDTH-1 : 0] s00_axi_awaddr,
-		input wire [2 : 0] s00_axi_awprot,
-		input wire  s00_axi_awvalid,
-		output wire  s00_axi_awready,
-		input wire [C_S00_AXI_DATA_WIDTH-1 : 0] s00_axi_wdata,
-		input wire [(C_S00_AXI_DATA_WIDTH/8)-1 : 0] s00_axi_wstrb,
-		input wire  s00_axi_wvalid,
-		output wire  s00_axi_wready,
-		output wire [1 : 0] s00_axi_bresp,
-		output wire  s00_axi_bvalid,
-		input wire  s00_axi_bready,
-		input wire [C_S00_AXI_ADDR_WIDTH-1 : 0] s00_axi_araddr,
-		input wire [2 : 0] s00_axi_arprot,
-		input wire  s00_axi_arvalid,
-		output wire  s00_axi_arready,
-		output wire [C_S00_AXI_DATA_WIDTH-1 : 0] s00_axi_rdata,
-		output wire [1 : 0] s00_axi_rresp,
-		output wire  s00_axi_rvalid,
-		input wire  s00_axi_rready
+		output wire  m00_axi_rready
 	);
+// Instantiation of Axi Bus Interface S00_AXI
+	my_dma_v1_0_S00_AXI # ( 
+		.C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH),
+		.C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
+	) my_dma_v1_0_S00_AXI_inst (
+		.hw_active(hw_active),
+		.dst_addr(dst_addr),
+		.src_addr(src_addr),
+		.cpy_len(len_copy),
+		.hw_done(hw_done),
+		.S_AXI_ACLK(s00_axi_aclk),
+		.S_AXI_ARESETN(s00_axi_aresetn),
+		.S_AXI_AWADDR(s00_axi_awaddr),
+		.S_AXI_AWPROT(s00_axi_awprot),
+		.S_AXI_AWVALID(s00_axi_awvalid),
+		.S_AXI_AWREADY(s00_axi_awready),
+		.S_AXI_WDATA(s00_axi_wdata),
+		.S_AXI_WSTRB(s00_axi_wstrb),
+		.S_AXI_WVALID(s00_axi_wvalid),
+		.S_AXI_WREADY(s00_axi_wready),
+		.S_AXI_BRESP(s00_axi_bresp),
+		.S_AXI_BVALID(s00_axi_bvalid),
+		.S_AXI_BREADY(s00_axi_bready),
+		.S_AXI_ARADDR(s00_axi_araddr),
+		.S_AXI_ARPROT(s00_axi_arprot),
+		.S_AXI_ARVALID(s00_axi_arvalid),
+		.S_AXI_ARREADY(s00_axi_arready),
+		.S_AXI_RDATA(s00_axi_rdata),
+		.S_AXI_RRESP(s00_axi_rresp),
+		.S_AXI_RVALID(s00_axi_rvalid),
+		.S_AXI_RREADY(s00_axi_rready)
+	);
+
 // Instantiation of Axi Bus Interface M00_AXI
 	my_dma_v1_0_M00_AXI # ( 
 		.C_M_TARGET_SLAVE_BASE_ADDR(C_M00_AXI_TARGET_SLAVE_BASE_ADDR),
@@ -117,9 +147,11 @@
 		.C_M_AXI_RUSER_WIDTH(C_M00_AXI_RUSER_WIDTH),
 		.C_M_AXI_BUSER_WIDTH(C_M00_AXI_BUSER_WIDTH)
 	) my_dma_v1_0_M00_AXI_inst (
-		.INIT_AXI_TXN(m00_axi_init_axi_txn),
-		.TXN_DONE(m00_axi_txn_done),
-		.ERROR(m00_axi_error),
+        .hw_active(hw_active),
+        .dst_addr(dst_addr),
+        .src_addr(src_addr),
+        .len_copy(len_copy),
+        .hw_done(hw_done),
 		.M_AXI_ACLK(m00_axi_aclk),
 		.M_AXI_ARESETN(m00_axi_aresetn),
 		.M_AXI_AWID(m00_axi_awid),
@@ -166,36 +198,12 @@
 		.M_AXI_RREADY(m00_axi_rready)
 	);
 
-// Instantiation of Axi Bus Interface S00_AXI
-	my_dma_v1_0_S00_AXI # ( 
-		.C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH),
-		.C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
-	) my_dma_v1_0_S00_AXI_inst (
-		.S_AXI_ACLK(s00_axi_aclk),
-		.S_AXI_ARESETN(s00_axi_aresetn),
-		.S_AXI_AWADDR(s00_axi_awaddr),
-		.S_AXI_AWPROT(s00_axi_awprot),
-		.S_AXI_AWVALID(s00_axi_awvalid),
-		.S_AXI_AWREADY(s00_axi_awready),
-		.S_AXI_WDATA(s00_axi_wdata),
-		.S_AXI_WSTRB(s00_axi_wstrb),
-		.S_AXI_WVALID(s00_axi_wvalid),
-		.S_AXI_WREADY(s00_axi_wready),
-		.S_AXI_BRESP(s00_axi_bresp),
-		.S_AXI_BVALID(s00_axi_bvalid),
-		.S_AXI_BREADY(s00_axi_bready),
-		.S_AXI_ARADDR(s00_axi_araddr),
-		.S_AXI_ARPROT(s00_axi_arprot),
-		.S_AXI_ARVALID(s00_axi_arvalid),
-		.S_AXI_ARREADY(s00_axi_arready),
-		.S_AXI_RDATA(s00_axi_rdata),
-		.S_AXI_RRESP(s00_axi_rresp),
-		.S_AXI_RVALID(s00_axi_rvalid),
-		.S_AXI_RREADY(s00_axi_rready)
-	);
-
 	// Add user logic here
-
+    wire                               hw_active;
+    wire [C_M00_AXI_DATA_WIDTH-1:0]    dst_addr;
+    wire [C_M00_AXI_DATA_WIDTH-1:0]    src_addr;
+    wire [C_M00_AXI_DATA_WIDTH-1:0]    len_copy;
+    wire                               hw_done;
 	// User logic ends
 
 	endmodule
