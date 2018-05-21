@@ -220,5 +220,3 @@ CONFIG.NUM_MI {1} \
 create_root_design ""
 
 
-common::send_msg_id "BD_TCL-1000" "WARNING" "This Tcl script was generated from a block design that has not been validated. It is possible that design <$design_name> may result in errors during validation."
-
