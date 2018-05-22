@@ -62,6 +62,7 @@ always @(posedge s_axi_aclk) begin
     raddr <= 0;
     s_axi_arready <= 0;
     rburst <= 0;
+    s_axi_rlast <= 0;
   end
   else begin
     raddr <= s_axi_arvalid ? s_axi_araddr : (
@@ -69,6 +70,7 @@ always @(posedge s_axi_aclk) begin
     s_axi_arready <= s_axi_arvalid && !s_axi_arready;
     rburst <= s_axi_arvalid ? s_axi_arlen + 1 : (
       s_axi_rvalid && s_axi_rready ? rburst - 1 : rburst);
+    s_axi_rlast <= rburst == 1 && s_axi_rready;
   end
 end
 

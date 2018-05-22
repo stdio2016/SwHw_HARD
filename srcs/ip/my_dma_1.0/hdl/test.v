@@ -48,10 +48,13 @@ wire m_arvalid;
 wire m_arready;
 wire [31:0] m_rdata;
 wire [1:0] m_rresp;
+wire m_rlast;
 wire m_rvalid;
 wire m_rready;
 
-my_dma_v1_0 dut(
+  my_dma_v1_0 #(
+    .C_M00_AXI_BURST_LEN(64)
+  ) dut (
     .s00_axi_aclk(clock),
     .s00_axi_aresetn(reset),
     .s00_axi_awaddr(awaddr),
@@ -96,6 +99,7 @@ my_dma_v1_0 dut(
     .m00_axi_arready(m_arready),
     .m00_axi_rdata(m_rdata),
     .m00_axi_rresp(m_rresp),
+    .m00_axi_rlast(m_rlast),
     .m00_axi_rvalid(m_rvalid),
     .m00_axi_rready(m_rready)
   );
@@ -123,6 +127,7 @@ my_dma_v1_0 dut(
       .s_axi_arready(m_arready),
       .s_axi_rdata(m_rdata),
       .s_axi_rresp(m_rresp),
+      .s_axi_rlast(m_rlast),
       .s_axi_rvalid(m_rvalid),
       .s_axi_rready(m_rready)
     );
@@ -180,7 +185,7 @@ initial begin
   write(8, 600);
   read(8, ans); $display("%d", ans);
 
-  write(12, 64);
+  write(12, 256);
   read(12, ans); $display("%d", ans);
   
   write(0, 1);

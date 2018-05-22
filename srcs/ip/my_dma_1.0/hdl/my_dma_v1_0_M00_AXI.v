@@ -1,4 +1,5 @@
 // sample code from teacher Chun-Jen Tsai 
+// modified by Yi-Feng Chen
 `timescale 1 ns / 1 ps
 
 	module my_dma_v1_0_M00_AXI #
@@ -221,6 +222,8 @@
 	reg  	init_txn_edge;
 	wire  	init_txn_pulse;
 
+reg [C_TRANSACTIONS_NUM+1:0] burst_len;
+
     // The internal buffer to store one burst of data.
     // You MUST change this burst buffer to SRAM for lab4.
     reg [C_M_AXI_DATA_WIDTH-1:0] buffer [0:C_M_AXI_BURST_LEN-1];
@@ -277,7 +280,7 @@
 	assign M_AXI_RREADY	= axi_rready;
 	//Example design I/O
 	//Burst size in bytes
-	assign burst_size_bytes	= C_M_AXI_BURST_LEN * C_M_AXI_DATA_WIDTH/8;
+	assign burst_size_bytes	= burst_len * C_M_AXI_DATA_WIDTH/8;
 	assign init_txn_pulse	= (!init_txn_ff2) && init_txn_ff;
 
 
@@ -410,7 +413,7 @@
 	    // count reaches the penultimate count to synchronize                           
 	    // with the last write data when write_index is b1111                           
 	    // else if (&(write_index[C_TRANSACTIONS_NUM-1:1])&& ~write_index[0] && wnext)  
-	    else if (((write_index == C_M_AXI_BURST_LEN-2 && C_M_AXI_BURST_LEN >= 2) && wnext) || (C_M_AXI_BURST_LEN == 1 ))
+	    else if (((write_index == burst_len-2 && burst_len >= 2) && wnext) || (burst_len == 1 ))
 	      begin                                                                         
 	        axi_wlast <= 1'b1;                                                          
 	      end                                                                           
@@ -433,7 +436,7 @@
 	      begin                                                                         
 	        write_index <= 0;                                                           
 	      end                                                                           
-	    else if (wnext && (write_index != C_M_AXI_BURST_LEN-1))                         
+	    else if (wnext && (write_index != burst_len-1))                         
 	      begin                                                                         
 	        write_index <= write_index + 1;                                             
 	      end                                                                           
@@ -562,7 +565,7 @@
 	      begin                                                             
 	        read_index <= 0;                                                
 	      end                                                               
-	    else if (rnext && (read_index != C_M_AXI_BURST_LEN-1))              
+	    else if (rnext && (read_index != burst_len-1))              
 	      begin                                                             
 	        read_index <= read_index + 1;                                   
 	      end                                                               
@@ -633,6 +636,7 @@
 	            // Wait until the signal INIT_AXI_TXN becomes active.
 	            if ( init_txn_pulse == 1'b1)
 	              begin
+									burst_len <= len_copy>>2;
 	                mst_exec_state  <= INIT_READ;
                     hw_done <= 0;
 	              end
@@ -733,7 +737,7 @@
 	                                                                                                            
 	    //The writes_done should be associated with a bready response                                           
 	    //else if (M_AXI_BVALID && axi_bready && (write_burst_counter == {(C_NO_BURSTS_REQ-1){1}}) && axi_wlast)
-	    else if (M_AXI_BVALID && (write_index == C_M_AXI_BURST_LEN-1) && axi_bready)                          
+	    else if (M_AXI_BVALID && (write_index == burst_len-1) && axi_bready)                          
 	      writes_done <= 1'b1;                                                                                  
 	    else                                                                                                    
 	      writes_done <= writes_done;                                                                           
@@ -768,7 +772,7 @@
 	                                                                                                            
 	    //The reads_done should be associated with a rready response                                            
 	    //else if (M_AXI_BVALID && axi_bready && (write_burst_counter == {(C_NO_BURSTS_REQ-1){1}}) && axi_wlast)
-	    else if (M_AXI_RVALID && axi_rready && (read_index == C_M_AXI_BURST_LEN-1))
+	    else if (M_AXI_RVALID && axi_rready && (read_index == burst_len-1))
 	      reads_done <= 1'b1;                                                                                   
 	    else                                                                                                    
 	      reads_done <= reads_done;                                                                             
