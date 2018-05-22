@@ -174,6 +174,8 @@ CONFIG.C_M00_AXI_WUSER_WIDTH {4} \
   # Create instance: processing_system7_0, and set properties
   set processing_system7_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:5.5 processing_system7_0 ]
   set_property -dict [ list \
+CONFIG.PCW_UART1_PERIPHERAL_ENABLE {1} \
+CONFIG.PCW_UART1_UART1_IO {MIO 48 .. 49} \
 CONFIG.PCW_USE_S_AXI_HP0 {1} \
  ] $processing_system7_0
 
