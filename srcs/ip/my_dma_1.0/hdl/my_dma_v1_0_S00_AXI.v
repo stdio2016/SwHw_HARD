@@ -1,4 +1,4 @@
-
+// sample code from teacher Chun-Jen Tsai 
 `timescale 1 ns / 1 ps
 
 	module my_dma_v1_0_S00_AXI #

@@ -1,4 +1,5 @@
-
+// sample code from teacher Chun-Jen Tsai 
+// modified by Yi-Feng Chen
 `timescale 1 ns / 1 ps
 
 	module my_dma_v1_0 #
@@ -101,6 +102,15 @@
 		input wire  m00_axi_rvalid,
 		output wire  m00_axi_rready
 	);
+
+// these wires has to be defined here
+    wire                               hw_active;
+    wire [C_M00_AXI_DATA_WIDTH-1:0]    dst_addr;
+    wire [C_M00_AXI_DATA_WIDTH-1:0]    src_addr;
+    wire [C_M00_AXI_DATA_WIDTH-1:0]    len_copy;
+    wire                               hw_done;
+// user logic ends
+	
 // Instantiation of Axi Bus Interface S00_AXI
 	my_dma_v1_0_S00_AXI # ( 
 		.C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH),
@@ -199,11 +209,6 @@
 	);
 
 	// Add user logic here
-    wire                               hw_active;
-    wire [C_M00_AXI_DATA_WIDTH-1:0]    dst_addr;
-    wire [C_M00_AXI_DATA_WIDTH-1:0]    src_addr;
-    wire [C_M00_AXI_DATA_WIDTH-1:0]    len_copy;
-    wire                               hw_done;
 	// User logic ends
 
 	endmodule
