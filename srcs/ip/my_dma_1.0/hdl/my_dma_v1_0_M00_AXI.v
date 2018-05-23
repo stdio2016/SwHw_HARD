@@ -626,6 +626,7 @@ reg [C_TRANSACTIONS_NUM+1:0] burst_len;
 	        start_single_burst_write <= 1'b0;
 	        start_single_burst_read  <= 1'b0;
             hw_done <= 0;
+            burst_len <= 1;
 	      end
 	    else
 	      begin
@@ -636,7 +637,7 @@ reg [C_TRANSACTIONS_NUM+1:0] burst_len;
 	            // Wait until the signal INIT_AXI_TXN becomes active.
 	            if ( init_txn_pulse == 1'b1)
 	              begin
-									burst_len <= len_copy>>2;
+	                burst_len <= len_copy>>2;
 	                mst_exec_state  <= INIT_READ;
                     hw_done <= 0;
 	              end

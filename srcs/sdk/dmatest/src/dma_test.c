@@ -8,6 +8,7 @@
 volatile int *hw_active = (int *) (XPAR_MY_DMA_0_S00_AXI_BASEADDR +  0);
 volatile int *dst_addr  = (int *) (XPAR_MY_DMA_0_S00_AXI_BASEADDR +  4);
 volatile int *src_addr  = (int *) (XPAR_MY_DMA_0_S00_AXI_BASEADDR +  8);
+volatile int *copy_len  = (int *) (XPAR_MY_DMA_0_S00_AXI_BASEADDR +  12);
 
 char test_text[] = "This is a 64-byte string used to test the burst copy operation.";
 
@@ -18,6 +19,7 @@ void hw_memcpy_16w(void *dst, void *src)
 {
     *dst_addr = (int) dst;   // destination word address
     *src_addr = (int) src;   // source word address
+    *copy_len = 12;
 
     *hw_active = 1;         // trigger the HW IP
     while (*hw_active);     // wait for the transfer to finish
