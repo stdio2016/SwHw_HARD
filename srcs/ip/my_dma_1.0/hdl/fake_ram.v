@@ -62,7 +62,6 @@ always @(posedge s_axi_aclk) begin
     raddr <= 0;
     s_axi_arready <= 0;
     rburst <= 0;
-    s_axi_rlast <= 0;
   end
   else begin
     raddr <= s_axi_arvalid ? s_axi_araddr : (
@@ -70,7 +69,6 @@ always @(posedge s_axi_aclk) begin
     s_axi_arready <= s_axi_arvalid && !s_axi_arready;
     rburst <= s_axi_arvalid ? s_axi_arlen + 1 : (
       s_axi_rvalid && s_axi_rready ? rburst - 1 : rburst);
-    s_axi_rlast <= rburst == 1 && s_axi_rready;
   end
 end
 
@@ -80,16 +78,19 @@ always @(posedge s_axi_aclk) begin
     s_axi_rvalid <= 0;
     s_axi_rresp <= 2'b0;
     delay <= 3;
+    s_axi_rlast <= 0;
   end
   else begin
     if (rburst && yes && !s_axi_rvalid) begin
       s_axi_rvalid <= 1;
       s_axi_rresp <= 0;
+      s_axi_rlast <= rburst == 1;
     end
     else if (s_axi_rvalid && s_axi_rready) begin
       $display("read at %d = %d", raddr, s_axi_rdata);
       s_axi_rvalid <= 0;
-      delay <= 3;
+      delay <= &raddr[3:2] ? 3 : 1;
+      s_axi_rlast <= 0;
     end
     else
       delay <= delay - 1;

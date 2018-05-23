@@ -185,7 +185,7 @@ initial begin
   write(8, 600);
   read(8, ans); $display("%d", ans);
 
-  write(12, 256);
+  write(12, 8);
   read(12, ans); $display("%d", ans);
   
   write(0, 1);

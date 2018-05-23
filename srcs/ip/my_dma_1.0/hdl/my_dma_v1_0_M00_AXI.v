@@ -235,7 +235,7 @@ reg [C_TRANSACTIONS_NUM+1:0] burst_len;
 	//The AXI address is a concatenation of the target base address + active offset range
 	assign M_AXI_AWADDR	= /* C_M_TARGET_SLAVE_BASE_ADDR + */ axi_awaddr;
 	//Burst LENgth is number of transaction beats, minus 1
-	assign M_AXI_AWLEN	= C_M_AXI_BURST_LEN - 1;
+	assign M_AXI_AWLEN	= burst_len - 1;
 	//Size should be C_M_AXI_DATA_WIDTH, in 2^SIZE bytes, otherwise narrow bursts are used
 	assign M_AXI_AWSIZE	= clogb2((C_M_AXI_DATA_WIDTH/8)-1);
 	//INCR burst type is usually used, except for keyhole bursts
@@ -262,7 +262,7 @@ reg [C_TRANSACTIONS_NUM+1:0] burst_len;
 	assign M_AXI_ARID	= 'b0;
 	assign M_AXI_ARADDR	= /* C_M_TARGET_SLAVE_BASE_ADDR + */ axi_araddr;
 	//Burst LENgth is number of transaction beats, minus 1
-	assign M_AXI_ARLEN	= C_M_AXI_BURST_LEN - 1;
+	assign M_AXI_ARLEN	= burst_len - 1;
 	//Size should be C_M_AXI_DATA_WIDTH, in 2^n bytes, otherwise narrow bursts are used
 	assign M_AXI_ARSIZE	= clogb2((C_M_AXI_DATA_WIDTH/8)-1);
 	//INCR burst type is usually used, except for keyhole bursts
@@ -421,7 +421,7 @@ reg [C_TRANSACTIONS_NUM+1:0] burst_len;
 	    // accepted by the slave with a valid response                                  
 	    else if (wnext)                                                                 
 	      axi_wlast <= 1'b0;                                                            
-	    else if (axi_wlast && C_M_AXI_BURST_LEN == 1)                                   
+	    else if (axi_wlast && burst_len == 1)                                   
 	      axi_wlast <= 1'b0;                                                            
 	    else                                                                            
 	      axi_wlast <= axi_wlast;                                                       
