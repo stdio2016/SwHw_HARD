@@ -223,6 +223,7 @@
 	wire  	init_txn_pulse;
 
 reg [C_TRANSACTIONS_NUM+1:0] burst_len;
+reg [C_M_AXI_DATA_WIDTH-1 : 0] remain_to_copy;
 
     // The internal buffer to store one burst of data.
     // You MUST change this burst buffer to SRAM for lab4.
@@ -627,6 +628,7 @@ reg [C_TRANSACTIONS_NUM+1:0] burst_len;
 	        start_single_burst_read  <= 1'b0;
             hw_done <= 0;
             burst_len <= 1;
+						remain_to_copy <= 0;
 	      end
 	    else
 	      begin
@@ -637,7 +639,8 @@ reg [C_TRANSACTIONS_NUM+1:0] burst_len;
 	            // Wait until the signal INIT_AXI_TXN becomes active.
 	            if ( init_txn_pulse == 1'b1)
 	              begin
-	                burst_len <= len_copy>>2;
+	                remain_to_copy <= len_copy>>2;
+	                burst_len <= len_copy>>2 < C_M_AXI_BURST_LEN ? len_copy>>2 : C_M_AXI_BURST_LEN;
 	                mst_exec_state  <= INIT_READ;
                     hw_done <= 0;
 	              end
@@ -677,6 +680,7 @@ reg [C_TRANSACTIONS_NUM+1:0] burst_len;
 	            // write controller
 	            if (writes_done)
 	              begin
+	                remain_to_copy <= remain_to_copy - burst_len;
 	                mst_exec_state <= COPY_DONE;//
 	              end
 	            else
@@ -699,8 +703,14 @@ reg [C_TRANSACTIONS_NUM+1:0] burst_len;
 	            // compare_done signal will be asseted to indicate success.
 	            //if (~error_reg)
 	            begin
-	              mst_exec_state <= IDLE;
-                  hw_done <= 1;
+	              if (remain_to_copy == 0) begin
+	                mst_exec_state <= IDLE;
+	                hw_done <= 1;
+	              end
+	              else begin
+	                mst_exec_state <= INIT_READ;
+	                burst_len <= remain_to_copy < C_M_AXI_BURST_LEN ? remain_to_copy : C_M_AXI_BURST_LEN;
+	              end
 	            end
 	          default :
 	            begin
@@ -733,7 +743,7 @@ reg [C_TRANSACTIONS_NUM+1:0] burst_len;
 	                                                                                                            
 	  always @(posedge M_AXI_ACLK)                                                                              
 	  begin                                                                                                     
-	    if (M_AXI_ARESETN == 0 || init_txn_pulse == 1'b1)                                                                                 
+	    if (M_AXI_ARESETN == 0 || init_txn_pulse == 1'b1 || mst_exec_state == COPY_DONE)                                                                                 
 	      writes_done <= 1'b0;                                                                                  
 	                                                                                                            
 	    //The writes_done should be associated with a bready response                                           
@@ -768,7 +778,7 @@ reg [C_TRANSACTIONS_NUM+1:0] burst_len;
 	                                                                                                            
 	  always @(posedge M_AXI_ACLK)                                                                              
 	  begin                                                                                                     
-	    if (M_AXI_ARESETN == 0 || init_txn_pulse == 1'b1)                                                                                 
+	    if (M_AXI_ARESETN == 0 || init_txn_pulse == 1'b1 || mst_exec_state == COPY_DONE)                                                                                 
 	      reads_done <= 1'b0;                                                                                   
 	                                                                                                            
 	    //The reads_done should be associated with a rready response                                            
