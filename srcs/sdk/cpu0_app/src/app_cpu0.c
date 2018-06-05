@@ -69,9 +69,9 @@ int main(int argc, char **argv)
         {
             (*shared_counter)++;
             (*local_counter)++;
+            disturbance += *hardware_mutex;
         }
         /* Leaving critical section */
-        disturbance += *hardware_mutex;
         unlock_mutex(thread_id);
     }
 
@@ -80,7 +80,7 @@ int main(int argc, char **argv)
     printf("Local CPU1 counter = %d\n", *cpu1_local_ctr);
     if (*shared_counter != (*local_counter + *cpu1_local_ctr))
         printf("CPU0 counter + CPU1 counter != Shared counter, the counter is corrupted.\n");
-    else if (disturbance != thread_id * *local_counter) {
+    else if (disturbance != thread_id * ((unsigned) *local_counter)) {
         puts("mutex is broken");
     }
     else if (*local_counter == 0 || *cpu1_local_ctr == 0)
