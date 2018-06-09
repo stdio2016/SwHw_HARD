@@ -158,8 +158,14 @@ proc create_root_design { parentCell } {
 
   # Create ports
 
-  # Create instance: my_sync_0, and set properties
-  set my_sync_0 [ create_bd_cell -type ip -vlnv xilinx.com:user:my_sync:1.0 my_sync_0 ]
+  # Create instance: axi_smc, and set properties
+  set axi_smc [ create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 axi_smc ]
+  set_property -dict [ list \
+CONFIG.NUM_SI {1} \
+ ] $axi_smc
+
+  # Create instance: fastsad_0, and set properties
+  set fastsad_0 [ create_bd_cell -type ip -vlnv vendorname:user:fastsad:1.0 fastsad_0 ]
 
   # Create instance: processing_system7_0, and set properties
   set processing_system7_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:5.5 processing_system7_0 ]
@@ -167,7 +173,8 @@ proc create_root_design { parentCell } {
 CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ {100.000000} \
 CONFIG.PCW_QSPI_GRP_SINGLE_SS_ENABLE {1} \
 CONFIG.PCW_UART1_PERIPHERAL_ENABLE {1} \
-CONFIG.PCW_USE_S_AXI_HP0 {1} \
+CONFIG.PCW_USE_S_AXI_ACP {1} \
+CONFIG.PCW_USE_S_AXI_HP0 {0} \
 CONFIG.preset {ZedBoard} \
  ] $processing_system7_0
 
@@ -181,19 +188,25 @@ CONFIG.NUM_MI {1} \
   set rst_ps7_0_100M [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_ps7_0_100M ]
 
   # Create interface connections
+  connect_bd_intf_net -intf_net axi_smc_M00_AXI [get_bd_intf_pins axi_smc/M00_AXI] [get_bd_intf_pins processing_system7_0/S_AXI_ACP]
+  connect_bd_intf_net -intf_net fastsad_0_M00_AXI [get_bd_intf_pins axi_smc/S00_AXI] [get_bd_intf_pins fastsad_0/M00_AXI]
   connect_bd_intf_net -intf_net processing_system7_0_DDR [get_bd_intf_ports DDR] [get_bd_intf_pins processing_system7_0/DDR]
   connect_bd_intf_net -intf_net processing_system7_0_FIXED_IO [get_bd_intf_ports FIXED_IO] [get_bd_intf_pins processing_system7_0/FIXED_IO]
   connect_bd_intf_net -intf_net processing_system7_0_M_AXI_GP0 [get_bd_intf_pins processing_system7_0/M_AXI_GP0] [get_bd_intf_pins ps7_0_axi_periph/S00_AXI]
-  connect_bd_intf_net -intf_net ps7_0_axi_periph_M00_AXI [get_bd_intf_pins my_sync_0/S00_AXI] [get_bd_intf_pins ps7_0_axi_periph/M00_AXI]
+  connect_bd_intf_net -intf_net ps7_0_axi_periph_M00_AXI [get_bd_intf_pins fastsad_0/S00_AXI] [get_bd_intf_pins ps7_0_axi_periph/M00_AXI]
 
   # Create port connections
-  connect_bd_net -net processing_system7_0_FCLK_CLK0 [get_bd_pins my_sync_0/s00_axi_aclk] [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK] [get_bd_pins processing_system7_0/S_AXI_HP0_ACLK] [get_bd_pins ps7_0_axi_periph/ACLK] [get_bd_pins ps7_0_axi_periph/M00_ACLK] [get_bd_pins ps7_0_axi_periph/S00_ACLK] [get_bd_pins rst_ps7_0_100M/slowest_sync_clk]
+  connect_bd_net -net processing_system7_0_FCLK_CLK0 [get_bd_pins axi_smc/aclk] [get_bd_pins fastsad_0/m00_axi_aclk] [get_bd_pins fastsad_0/s00_axi_aclk] [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK] [get_bd_pins processing_system7_0/S_AXI_ACP_ACLK] [get_bd_pins ps7_0_axi_periph/ACLK] [get_bd_pins ps7_0_axi_periph/M00_ACLK] [get_bd_pins ps7_0_axi_periph/S00_ACLK] [get_bd_pins rst_ps7_0_100M/slowest_sync_clk]
   connect_bd_net -net processing_system7_0_FCLK_RESET0_N [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins rst_ps7_0_100M/ext_reset_in]
   connect_bd_net -net rst_ps7_0_100M_interconnect_aresetn [get_bd_pins ps7_0_axi_periph/ARESETN] [get_bd_pins rst_ps7_0_100M/interconnect_aresetn]
-  connect_bd_net -net rst_ps7_0_100M_peripheral_aresetn [get_bd_pins my_sync_0/s00_axi_aresetn] [get_bd_pins ps7_0_axi_periph/M00_ARESETN] [get_bd_pins ps7_0_axi_periph/S00_ARESETN] [get_bd_pins rst_ps7_0_100M/peripheral_aresetn]
+  connect_bd_net -net rst_ps7_0_100M_peripheral_aresetn [get_bd_pins axi_smc/aresetn] [get_bd_pins fastsad_0/m00_axi_aresetn] [get_bd_pins fastsad_0/s00_axi_aresetn] [get_bd_pins ps7_0_axi_periph/M00_ARESETN] [get_bd_pins ps7_0_axi_periph/S00_ARESETN] [get_bd_pins rst_ps7_0_100M/peripheral_aresetn]
 
   # Create address segments
-  create_bd_addr_seg -range 0x00010000 -offset 0x43C00000 [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs my_sync_0/S00_AXI/S00_AXI_reg] SEG_my_sync_0_S00_AXI_reg
+  create_bd_addr_seg -range 0x20000000 -offset 0x00000000 [get_bd_addr_spaces fastsad_0/M00_AXI] [get_bd_addr_segs processing_system7_0/S_AXI_ACP/ACP_DDR_LOWOCM] SEG_processing_system7_0_ACP_DDR_LOWOCM
+  create_bd_addr_seg -range 0x00400000 -offset 0xE0000000 [get_bd_addr_spaces fastsad_0/M00_AXI] [get_bd_addr_segs processing_system7_0/S_AXI_ACP/ACP_IOP] SEG_processing_system7_0_ACP_IOP
+  create_bd_addr_seg -range 0x40000000 -offset 0x40000000 [get_bd_addr_spaces fastsad_0/M00_AXI] [get_bd_addr_segs processing_system7_0/S_AXI_ACP/ACP_M_AXI_GP0] SEG_processing_system7_0_ACP_M_AXI_GP0
+  create_bd_addr_seg -range 0x01000000 -offset 0xFC000000 [get_bd_addr_spaces fastsad_0/M00_AXI] [get_bd_addr_segs processing_system7_0/S_AXI_ACP/ACP_QSPI_LINEAR] SEG_processing_system7_0_ACP_QSPI_LINEAR
+  create_bd_addr_seg -range 0x00010000 -offset 0x43C00000 [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs fastsad_0/S00_AXI/S00_AXI_reg] SEG_fastsad_0_S00_AXI_reg
 
 
   # Restore current instance
@@ -210,4 +223,6 @@ CONFIG.NUM_MI {1} \
 
 create_root_design ""
 
+
+common::send_msg_id "BD_TCL-1000" "WARNING" "This Tcl script was generated from a block design that has not been validated. It is possible that design <$design_name> may result in errors during validation."
 
