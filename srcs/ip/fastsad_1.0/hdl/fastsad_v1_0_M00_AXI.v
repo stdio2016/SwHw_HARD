@@ -50,9 +50,7 @@
     output reg                           hw_done,
   // User ports ends
   // Do not modify the ports beyond this line
-  input wire ERROR,
-  input wire TXN_DONE,
-  input wire INIT_AXI_TXN,
+
   // Global Clock Signal.
   input wire  M_AXI_ACLK,
   // Global Reset Singal. This Signal is Active Low
