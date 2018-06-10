@@ -235,6 +235,7 @@
 
 reg [C_TRANSACTIONS_NUM+1:0] burst_len;
 reg [C_M_AXI_DATA_WIDTH-1 : 0] remain_to_copy;
+reg [MY_BUF_ADDR_WIDTH-3 : 0] read_write_base;
 
     // The internal buffer to store one row of pixel.
     reg [C_M_AXI_DATA_WIDTH-1:0] buffer [0:(2**MY_BUF_ADDR_WIDTH)/4-1][0:32];
@@ -463,7 +464,7 @@ reg [C_M_AXI_DATA_WIDTH-1 : 0] remain_to_copy;
       if (M_AXI_ARESETN == 0 || init_txn_pulse == 1)
         axi_wdata = 0;
       else if (mst_exec_state == INIT_WRITE)
-          axi_wdata = write_buffer[write_index];
+        axi_wdata = write_buffer[read_write_base + write_index];
       else
         axi_wdata = axi_wdata;
     end
@@ -619,7 +620,7 @@ reg [C_M_AXI_DATA_WIDTH-1 : 0] remain_to_copy;
     begin
       //Read data when RVALID is active
       if (rnext)
-          buffer[read_index][dst_row] <= M_AXI_RDATA;
+          buffer[read_write_base + read_index][dst_row] <= M_AXI_RDATA;
     end
 
   //Flag any read response errors
@@ -640,6 +641,7 @@ reg [C_M_AXI_DATA_WIDTH-1 : 0] remain_to_copy;
           hw_done <= 0;
           burst_len <= 1;
           remain_to_copy <= 0;
+          read_write_base <= 0;
         end
       else
         begin
@@ -652,13 +654,15 @@ reg [C_M_AXI_DATA_WIDTH-1 : 0] remain_to_copy;
                 begin
                   remain_to_copy <= len_copy>>2;
                   burst_len <= len_copy>>2 < C_M_AXI_BURST_LEN ? len_copy>>2 : C_M_AXI_BURST_LEN;
-                  mst_exec_state  <= INIT_READ;
-                    hw_done <= 0;
+                  mst_exec_state  <= to_write ? INIT_WRITE : INIT_READ;
+                  hw_done <= 0;
+                  read_write_base <= 0;
                 end
               else
                 begin
                   mst_exec_state  <= IDLE;
-                    hw_done <= 0;
+                  hw_done <= 0;
+                  read_write_base <= 0;
                 end
 
             INIT_READ:
@@ -668,7 +672,9 @@ reg [C_M_AXI_DATA_WIDTH-1 : 0] remain_to_copy;
               // read controller
               if (reads_done)
                 begin
-                  mst_exec_state <= INIT_WRITE;
+                  read_write_base <= read_write_base + burst_len;
+                  remain_to_copy <= remain_to_copy - burst_len;
+                  mst_exec_state <= COPY_DONE;
                 end
               else
                 begin
@@ -691,8 +697,9 @@ reg [C_M_AXI_DATA_WIDTH-1 : 0] remain_to_copy;
               // write controller
               if (writes_done)
                 begin
+                  read_write_base <= read_write_base + burst_len;
                   remain_to_copy <= remain_to_copy - burst_len;
-                  mst_exec_state <= COPY_DONE;//
+                  mst_exec_state <= COPY_DONE;
                 end
               else
                 begin
@@ -719,7 +726,7 @@ reg [C_M_AXI_DATA_WIDTH-1 : 0] remain_to_copy;
                   hw_done <= 1;
                 end
                 else begin
-                  mst_exec_state <= INIT_READ;
+                  mst_exec_state <= to_write ? INIT_WRITE : INIT_READ;
                   burst_len <= remain_to_copy < C_M_AXI_BURST_LEN ? remain_to_copy : C_M_AXI_BURST_LEN;
                 end
               end

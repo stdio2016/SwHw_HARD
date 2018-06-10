@@ -4,6 +4,7 @@
   module fastsad_v1_0_S00_AXI #
   (
   // Users to add parameters here
+  parameter integer MY_BUF_ADDR_WIDTH = 11,
 
   // User parameters ends
   // Do not modify the parameters beyond this line
@@ -15,7 +16,14 @@
   )
   (
   // Users to add ports here
-
+  output wire  hw_active,
+  output wire  to_write,
+  output wire  [C_S_AXI_DATA_WIDTH-1:0] dst_addr,
+  output wire  [C_S_AXI_DATA_WIDTH-1:0] src_addr,
+  output wire  [5:0]                    dst_row,
+  
+  output wire  [MY_BUF_ADDR_WIDTH-1:0]  len_copy,
+  input  wire                           hw_done,
   // User ports ends
   // Do not modify the ports beyond this line
 

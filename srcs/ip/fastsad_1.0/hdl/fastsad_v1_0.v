@@ -4,7 +4,8 @@
   module fastsad_v1_0 #
   (
   // Users to add parameters here
-
+  parameter integer MY_BUF_ADDR_WIDTH = 11,
+  
   // User parameters ends
   // Do not modify the parameters beyond this line
 
@@ -101,11 +102,40 @@
   input wire  m00_axi_rvalid,
   output wire  m00_axi_rready
   );
+// define wire name
+wire hw_active;
+wire to_write;
+wire  [C_M00_AXI_DATA_WIDTH-1:0] dst_addr;
+wire  [7:0]                      write_data;
+wire  [MY_BUF_ADDR_WIDTH-1:0]    write_col_index;
+wire                             write_enable;
+
+wire  [C_M00_AXI_DATA_WIDTH-1:0] src_addr;
+wire  [5:0]                      dst_row;
+wire  [MY_BUF_ADDR_WIDTH-1:0]    read_col_index;
+wire  [0:33*8-1]                 col_data;
+
+wire  [MY_BUF_ADDR_WIDTH-1:0]    len_copy;
+wire                             hw_done;
+
+// end of wire name
+  
 // Instantiation of Axi Bus Interface S00_AXI
   fastsad_v1_0_S00_AXI # (
+  .MY_BUF_ADDR_WIDTH(MY_BUF_ADDR_WIDTH),
   .C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH),
   .C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
   ) fastsad_v1_0_S00_AXI_inst (
+    .hw_active(hw_active),
+    .to_write(to_write),
+    // write to main memory
+    .dst_addr(dst_addr),
+    // read from main memory
+    .src_addr(src_addr),
+    .dst_row(dst_row),
+    // both read and write
+    .len_copy(len_copy),
+    .hw_done(hw_done),
   .S_AXI_ACLK(s00_axi_aclk),
   .S_AXI_ARESETN(s00_axi_aresetn),
   .S_AXI_AWADDR(s00_axi_awaddr),
@@ -131,6 +161,7 @@
 
 // Instantiation of Axi Bus Interface M00_AXI
   fastsad_v1_0_M00_AXI # (
+  .MY_BUF_ADDR_WIDTH(MY_BUF_ADDR_WIDTH),
   .C_M_TARGET_SLAVE_BASE_ADDR(C_M00_AXI_TARGET_SLAVE_BASE_ADDR),
   .C_M_AXI_BURST_LEN(C_M00_AXI_BURST_LEN),
   .C_M_AXI_ID_WIDTH(C_M00_AXI_ID_WIDTH),
@@ -142,6 +173,21 @@
   .C_M_AXI_RUSER_WIDTH(C_M00_AXI_RUSER_WIDTH),
   .C_M_AXI_BUSER_WIDTH(C_M00_AXI_BUSER_WIDTH)
   ) fastsad_v1_0_M00_AXI_inst (
+    .hw_active(hw_active),
+    .to_write(to_write),
+    // write to main memory
+    .dst_addr(dst_addr),
+    .write_data(write_data),
+    .write_col(write_col_index),
+    .write_enable(write_enable),
+    // read from main memory
+    .src_addr(src_addr),
+    .dst_row(dst_row),
+    .read_col(read_col_index),
+    .col_data(col_data),
+    // both read and write
+    .len_copy(len_copy),
+    .hw_done(hw_done),
   .M_AXI_ACLK(m00_axi_aclk),
   .M_AXI_ARESETN(m00_axi_aresetn),
   .M_AXI_AWID(m00_axi_awid),
