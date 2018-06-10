@@ -6,7 +6,7 @@
   module fastsad_v1_0_M00_AXI #
   (
   // Users to add parameters here
-
+  parameter integer MY_BUF_ADDR_WIDTH = 11,
   // User parameters ends
   // Do not modify the parameters beyond this line
 
@@ -34,15 +34,25 @@
   (
   // Users to add ports here
     input wire                           hw_active,
+    input wire                           to_write,
+    // write to main memory
     input wire  [C_M_AXI_DATA_WIDTH-1:0] dst_addr,
+    input wire  [7:0]                    write_data,
+    input wire  [MY_BUF_ADDR_WIDTH-1:0]  write_col,
+    input wire                           write_enable,
+    // read from main memory
     input wire  [C_M_AXI_DATA_WIDTH-1:0] src_addr,
-    input wire  [C_M_AXI_DATA_WIDTH-1:0] len_copy,
+    input wire  [5:0]                    dst_row,
+    input wire  [MY_BUF_ADDR_WIDTH-1:0]  read_col,
+    output reg  [0:33*8-1]               col_data,
+    // both read and write
+    input wire  [MY_BUF_ADDR_WIDTH-1:0]  len_copy,
     output reg                           hw_done,
   // User ports ends
   // Do not modify the ports beyond this line
   input wire ERROR,
-        input wire TXN_DONE,
-        input wire INIT_AXI_TXN,
+  input wire TXN_DONE,
+  input wire INIT_AXI_TXN,
   // Global Clock Signal.
   input wire  M_AXI_ACLK,
   // Global Reset Singal. This Signal is Active Low
@@ -228,9 +238,9 @@
 reg [C_TRANSACTIONS_NUM+1:0] burst_len;
 reg [C_M_AXI_DATA_WIDTH-1 : 0] remain_to_copy;
 
-    // The internal buffer to store one burst of data.
-    // You MUST change this burst buffer to SRAM for lab4.
-    reg [C_M_AXI_DATA_WIDTH-1:0] buffer [0:C_M_AXI_BURST_LEN-1];
+    // The internal buffer to store one row of pixel.
+    reg [C_M_AXI_DATA_WIDTH-1:0] buffer [0:(2**MY_BUF_ADDR_WIDTH)/4-1][0:32];
+    reg [C_M_AXI_DATA_WIDTH-1:0] write_buffer [0:(2**MY_BUF_ADDR_WIDTH)/4-1];
 
   // I/O Connections assignments
 
@@ -455,7 +465,7 @@ reg [C_M_AXI_DATA_WIDTH-1 : 0] remain_to_copy;
       if (M_AXI_ARESETN == 0 || init_txn_pulse == 1)
         axi_wdata = 0;
       else if (mst_exec_state == INIT_WRITE)
-          axi_wdata = buffer[write_index];
+          axi_wdata = write_buffer[write_index];
       else
         axi_wdata = axi_wdata;
     end
@@ -611,7 +621,7 @@ reg [C_M_AXI_DATA_WIDTH-1 : 0] remain_to_copy;
     begin
       //Read data when RVALID is active
       if (rnext)
-          buffer[read_index] <= M_AXI_RDATA;
+          buffer[read_index][dst_row] <= M_AXI_RDATA;
     end
 
   //Flag any read response errors
@@ -793,6 +803,18 @@ reg [C_M_AXI_DATA_WIDTH-1 : 0] remain_to_copy;
       end
 
   // Add user logic here
+  integer i_rd;
+  always @(posedge M_AXI_ACLK) begin
+    for (i_rd = 0; i_rd < 33; i_rd = i_rd + 1) begin
+      col_data[i_rd*8 +: 8] <= buffer[read_col>>2][i_rd][read_col[1:0]*8 +: 8];
+    end
+  end
+
+  always @(posedge M_AXI_ACLK) begin
+    if (write_enable) begin
+      write_buffer[write_col>>2][write_col[1:0]*8 +: 8] <= write_data;
+    end
+  end
 
   // User logic ends
 
