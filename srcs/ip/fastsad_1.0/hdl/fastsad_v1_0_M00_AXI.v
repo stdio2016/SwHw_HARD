@@ -238,7 +238,21 @@ reg [C_M_AXI_DATA_WIDTH-1 : 0] remain_to_copy;
 reg [MY_BUF_ADDR_WIDTH-3 : 0] read_write_base;
 
     // The internal buffer to store one row of pixel.
-    reg [C_M_AXI_DATA_WIDTH-1:0] buffer [0:(2**MY_BUF_ADDR_WIDTH)/4-1][0:32];
+    wire [31:0] buf_data [0:31];
+    genvar row_i;
+    for (row_i = 0; row_i < 33; row_i = row_i + 1) begin
+      row_memory #(
+          .MY_BUF_ADDR_WIDTH(MY_BUF_ADDR_WIDTH)
+        ) ww (
+          .clk(M_AXI_ACLK),
+          .rd_addr(read_col>>2),
+          .wr_addr(read_write_base + read_index),
+          .wr_data(M_AXI_RDATA),
+          .wr_en(rnext && row_i == dst_row),
+          .rd_data(buf_data[row_i])
+        );
+    end
+    
     reg [C_M_AXI_DATA_WIDTH-1:0] write_buffer [0:(2**MY_BUF_ADDR_WIDTH)/4-1];
 
   // I/O Connections assignments
@@ -615,13 +629,14 @@ reg [MY_BUF_ADDR_WIDTH-3 : 0] read_write_base;
       // retain the previous value
     end
 
+    /*
   // Read a data burst into the buffer
     always @(posedge M_AXI_ACLK)
     begin
       //Read data when RVALID is active
       if (rnext)
           buffer[read_write_base + read_index][dst_row] <= M_AXI_RDATA;
-    end
+    end*/
 
   //Flag any read response errors
     assign read_resp_error = axi_rready & M_AXI_RVALID & M_AXI_RRESP[1];
@@ -809,9 +824,9 @@ reg [MY_BUF_ADDR_WIDTH-3 : 0] read_write_base;
 
   // Add user logic here
   integer i_rd;
-  always @(posedge M_AXI_ACLK) begin
+  always @(*) begin
     for (i_rd = 0; i_rd < 33; i_rd = i_rd + 1) begin
-      col_data[i_rd*8 +: 8] <= buffer[read_col>>2][i_rd][read_col[1:0]*8 +: 8];
+      col_data[i_rd*8 +: 8] = buf_data[i_rd][read_col[1:0]*8 +: 8];
     end
   end
 
