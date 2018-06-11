@@ -313,6 +313,9 @@
                       end
           endcase
         end
+        else begin
+          slv_reg0 <= hw_done ? 0 : slv_reg0;
+        end
     end
   end
 
@@ -450,6 +453,12 @@
   end
 
   // Add user logic here
+assign hw_active = (| slv_reg0);
+assign to_write = slv_reg1;
+assign len_copy = slv_reg2;
+assign src_addr = slv_reg3;
+assign dst_addr = slv_reg4;
+assign dst_row = slv_reg5;
 
   // User logic ends
 

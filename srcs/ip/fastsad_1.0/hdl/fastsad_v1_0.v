@@ -103,22 +103,26 @@
   output wire  m00_axi_rready
   );
 // define wire name
-wire hw_active;
+reg  mem_active;
 wire to_write;
 wire  [C_M00_AXI_DATA_WIDTH-1:0] dst_addr;
-wire  [7:0]                      write_data;
-wire  [MY_BUF_ADDR_WIDTH-1:0]    write_col_index;
-wire                             write_enable;
+reg   [7:0]                      write_data;
+reg   [MY_BUF_ADDR_WIDTH-1:0]    write_col_index;
+reg                              write_enable[0:1];
 
 wire  [C_M00_AXI_DATA_WIDTH-1:0] src_addr;
 wire  [5:0]                      dst_row;
-wire  [MY_BUF_ADDR_WIDTH-1:0]    read_col_index;
+reg   [MY_BUF_ADDR_WIDTH-1:0]    read_col_index;
 wire  [0:33*8-1]                 col_data;
 
 wire  [MY_BUF_ADDR_WIDTH-1:0]    len_copy;
-wire                             hw_done;
+wire                             mem_done;
+
+wire  hw_active;
+reg   hw_done;
 
 // end of wire name
+
   
 // Instantiation of Axi Bus Interface S00_AXI
   fastsad_v1_0_S00_AXI # (
@@ -173,13 +177,13 @@ wire                             hw_done;
   .C_M_AXI_RUSER_WIDTH(C_M00_AXI_RUSER_WIDTH),
   .C_M_AXI_BUSER_WIDTH(C_M00_AXI_BUSER_WIDTH)
   ) fastsad_v1_0_M00_AXI_inst (
-    .hw_active(hw_active),
+    .hw_active(mem_active),
     .to_write(to_write),
     // write to main memory
     .dst_addr(dst_addr),
     .write_data(write_data),
     .write_col(write_col_index),
-    .write_enable(write_enable),
+    .write_enable(write_enable[1]),
     // read from main memory
     .src_addr(src_addr),
     .dst_row(dst_row),
@@ -187,7 +191,7 @@ wire                             hw_done;
     .col_data(col_data),
     // both read and write
     .len_copy(len_copy),
-    .hw_done(hw_done),
+    .hw_done(mem_done),
   .M_AXI_ACLK(m00_axi_aclk),
   .M_AXI_ARESETN(m00_axi_aresetn),
   .M_AXI_AWID(m00_axi_awid),
@@ -235,6 +239,78 @@ wire                             hw_done;
   );
 
   // Add user logic here
+reg [3:0] state;
+localparam Idle = 0;
+localparam Init_read = 1;
+localparam Reading = 2;
+localparam Init_compute = 3;
+localparam Compute = 4;
+localparam Finish_compute = 5;
+localparam Init_write = 6;
+localparam Write = 7;
+
+always @(posedge s00_axi_aclk) begin
+  write_col_index <= read_col_index;
+  write_data <= col_data[0+:8] + col_data[8+:8];
+  write_enable[1] <= write_enable[0];
+end
+
+always @(posedge s00_axi_aclk) begin
+  if (s00_axi_aresetn == 0) begin
+    hw_done <= 0;
+    mem_active <= 0;
+    state <= Idle;
+  end
+  else begin
+    case (state)
+      Idle: begin
+        hw_done <= 0;
+        mem_active <= 0;
+        if (hw_active) begin
+          if (to_write == 0) state <= Init_read;
+          else state <= Init_compute;
+        end
+      end
+      Init_read: begin
+        mem_active <= 1;
+        state <= Reading;
+      end
+      Reading: begin
+        if (mem_done) begin
+          hw_done <= 1;
+          state <= Idle;
+        end
+      end
+      Init_compute: begin
+        read_col_index <= 0;
+        write_enable[0] <= 1;
+        state <= Compute;
+      end
+      Compute: begin
+        if (read_col_index == len_copy - 1) begin
+          write_enable[0] <= 0;
+          state <= Finish_compute;
+        end
+        read_col_index <= read_col_index + 1;
+      end
+      Finish_compute: begin
+        if (write_enable[1] == 0) begin
+          state <= Init_write;
+        end
+      end
+      Init_write: begin
+        mem_active <= 1;
+        state <= Write;
+      end
+      Write: begin
+        if (mem_done) begin
+          hw_done <= 1;
+          state <= Idle;
+        end
+      end
+    endcase
+  end
+end
 
   // User logic ends
 
