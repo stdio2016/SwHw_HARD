@@ -1,6 +1,7 @@
 // created by Yi-Feng Chen
 // Because Vivado has problem inferring block RAM from my design
 // I have to write a block RAM description
+`timescale 1ns / 1ps
 
 module row_memory #(
     parameter integer MY_BUF_ADDR_WIDTH = 11

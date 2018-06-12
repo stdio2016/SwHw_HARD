@@ -313,9 +313,9 @@
                       end
           endcase
         end
-        else begin
+      else begin
           slv_reg0 <= hw_done ? 0 : slv_reg0;
-        end
+      end
     end
   end
 

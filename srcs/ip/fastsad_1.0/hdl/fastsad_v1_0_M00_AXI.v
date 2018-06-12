@@ -238,14 +238,14 @@ reg [C_M_AXI_DATA_WIDTH-1 : 0] remain_to_copy;
 reg [MY_BUF_ADDR_WIDTH-3 : 0] read_write_base;
 
     // The internal buffer to store one row of pixel.
-    wire [31:0] buf_data [0:31];
+    wire [31:0] buf_data [0:32];
     genvar row_i;
     for (row_i = 0; row_i < 33; row_i = row_i + 1) begin
       row_memory #(
           .MY_BUF_ADDR_WIDTH(MY_BUF_ADDR_WIDTH)
         ) ww (
           .clk(M_AXI_ACLK),
-          .rd_addr(read_col>>2),
+          .rd_addr(read_col[MY_BUF_ADDR_WIDTH-1:2]),
           .wr_addr(read_write_base + read_index),
           .wr_data(M_AXI_RDATA),
           .wr_en(rnext && row_i == dst_row),
@@ -823,14 +823,17 @@ reg [MY_BUF_ADDR_WIDTH-3 : 0] read_write_base;
       end
 
   // Add user logic here
+  reg [MY_BUF_ADDR_WIDTH-1:0] read_col_prev;
+  
   integer i_rd;
   always @(*) begin
     for (i_rd = 0; i_rd < 33; i_rd = i_rd + 1) begin
-      col_data[i_rd*8 +: 8] = buf_data[i_rd][read_col[1:0]*8 +: 8];
+      col_data[i_rd*8 +: 8] = buf_data[i_rd][read_col_prev[1:0]*8 +: 8];
     end
   end
 
   always @(posedge M_AXI_ACLK) begin
+    read_col_prev <= read_col;
     if (write_enable) begin
       write_buffer[write_col>>2][write_col[1:0]*8 +: 8] <= write_data;
     end

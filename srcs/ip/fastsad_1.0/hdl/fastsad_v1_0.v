@@ -107,8 +107,8 @@ reg  mem_active;
 wire to_write;
 wire  [C_M00_AXI_DATA_WIDTH-1:0] dst_addr;
 reg   [7:0]                      write_data;
-reg   [MY_BUF_ADDR_WIDTH-1:0]    write_col_index;
-reg                              write_enable[0:1];
+reg   [MY_BUF_ADDR_WIDTH-1:0]    write_col_index[0:1];
+reg                              write_enable[0:2];
 
 wire  [C_M00_AXI_DATA_WIDTH-1:0] src_addr;
 wire  [5:0]                      dst_row;
@@ -182,8 +182,8 @@ reg   hw_done;
     // write to main memory
     .dst_addr(dst_addr),
     .write_data(write_data),
-    .write_col(write_col_index),
-    .write_enable(write_enable[1]),
+    .write_col(write_col_index[1]),
+    .write_enable(write_enable[2]),
     // read from main memory
     .src_addr(src_addr),
     .dst_row(dst_row),
@@ -248,11 +248,15 @@ localparam Compute = 4;
 localparam Finish_compute = 5;
 localparam Init_write = 6;
 localparam Write = 7;
+localparam Done = 8;
 
 always @(posedge s00_axi_aclk) begin
-  write_col_index <= read_col_index;
-  write_data <= col_data[0+:8] + col_data[8+:8];
+  write_col_index[0] <= read_col_index;
   write_enable[1] <= write_enable[0];
+  
+  write_col_index[1] <= write_col_index[0];
+  write_data <= col_data[0+:8] + col_data[8+:8];
+  write_enable[2] <= write_enable[1];
 end
 
 always @(posedge s00_axi_aclk) begin
@@ -278,7 +282,7 @@ always @(posedge s00_axi_aclk) begin
       Reading: begin
         if (mem_done) begin
           hw_done <= 1;
-          state <= Idle;
+          state <= Done;
         end
       end
       Init_compute: begin
@@ -294,7 +298,7 @@ always @(posedge s00_axi_aclk) begin
         read_col_index <= read_col_index + 1;
       end
       Finish_compute: begin
-        if (write_enable[1] == 0) begin
+        if (write_enable[2] == 0) begin
           state <= Init_write;
         end
       end
@@ -305,8 +309,12 @@ always @(posedge s00_axi_aclk) begin
       Write: begin
         if (mem_done) begin
           hw_done <= 1;
-          state <= Idle;
+          state <= Done;
         end
+      end
+      Done: begin
+        hw_done <= 0;
+        state <= Idle;
       end
     endcase
   end
