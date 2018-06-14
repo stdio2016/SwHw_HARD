@@ -1,10 +1,12 @@
 SwHw_HARD.cache
 SwHw_HARD.runs
-SwHw_HARD.xpr
-SwHw_HARD.hw
-SwHw_HARD.srcs
+SwHw_HARD.srcs/*/bd/*/ip
+SwHw_HARD.srcs/*/bd/*/ipshared
 SwHw_HARD.ip_user_files
-SwHw_HARD.sdk
+SwHw_HARD.sdk/*/Debug
+SwHw_HARD.sdk/*/Release
+SwHw_HARD.sdk/*_bsp/ps*_cortexa9_*
+webtalk
 SwHw_HARD.tmp
 SwHw_HARD.sim
 *.jou
