@@ -6,6 +6,7 @@ SwHw_HARD.ip_user_files
 SwHw_HARD.sdk/*/Debug
 SwHw_HARD.sdk/*/Release
 SwHw_HARD.sdk/*_bsp/ps*_cortexa9_*
+SwHw_HARD.sdk/.metadata/.plugins/org.eclipse.cdt.core
 webtalk
 SwHw_HARD.tmp
 SwHw_HARD.sim
