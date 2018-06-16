@@ -181,7 +181,6 @@ set_property MARK_DEBUG true [get_nets {design_1_i/processing_system7_0/S_AXI_AC
 set_property MARK_DEBUG true [get_nets {design_1_i/processing_system7_0/S_AXI_ACP_ARADDR[25]}]
 set_property MARK_DEBUG true [get_nets design_1_i/processing_system7_0/S_AXI_ACP_RREADY]
 set_property MARK_DEBUG true [get_nets {design_1_i/processing_system7_0/S_AXI_ACP_ARADDR[15]}]
-set_property MARK_DEBUG true [get_nets design_1_i/processing_system7_0/S_AXI_ACP_ACLK]
 set_property MARK_DEBUG true [get_nets {design_1_i/processing_system7_0/S_AXI_ACP_ARADDR[17]}]
 set_property MARK_DEBUG true [get_nets {design_1_i/processing_system7_0/S_AXI_ACP_ARQOS[0]}]
 set_property MARK_DEBUG true [get_nets {design_1_i/processing_system7_0/S_AXI_ACP_ARLOCK[0]}]
@@ -390,55 +389,54 @@ connect_debug_port u_ila_0/probe22 [get_nets [list {design_1_i/processing_system
 create_debug_port u_ila_0 probe
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe23]
 set_property port_width 1 [get_debug_ports u_ila_0/probe23]
-connect_debug_port u_ila_0/probe23 [get_nets [list design_1_i/processing_system7_0/S_AXI_ACP_ACLK]]
+connect_debug_port u_ila_0/probe23 [get_nets [list design_1_i/processing_system7_0/S_AXI_ACP_ARREADY]]
 create_debug_port u_ila_0 probe
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe24]
 set_property port_width 1 [get_debug_ports u_ila_0/probe24]
-connect_debug_port u_ila_0/probe24 [get_nets [list design_1_i/processing_system7_0/S_AXI_ACP_ARREADY]]
+connect_debug_port u_ila_0/probe24 [get_nets [list design_1_i/processing_system7_0/S_AXI_ACP_ARVALID]]
 create_debug_port u_ila_0 probe
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe25]
 set_property port_width 1 [get_debug_ports u_ila_0/probe25]
-connect_debug_port u_ila_0/probe25 [get_nets [list design_1_i/processing_system7_0/S_AXI_ACP_ARVALID]]
+connect_debug_port u_ila_0/probe25 [get_nets [list design_1_i/processing_system7_0/S_AXI_ACP_AWREADY]]
 create_debug_port u_ila_0 probe
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe26]
 set_property port_width 1 [get_debug_ports u_ila_0/probe26]
-connect_debug_port u_ila_0/probe26 [get_nets [list design_1_i/processing_system7_0/S_AXI_ACP_AWREADY]]
+connect_debug_port u_ila_0/probe26 [get_nets [list design_1_i/processing_system7_0/S_AXI_ACP_AWVALID]]
 create_debug_port u_ila_0 probe
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe27]
 set_property port_width 1 [get_debug_ports u_ila_0/probe27]
-connect_debug_port u_ila_0/probe27 [get_nets [list design_1_i/processing_system7_0/S_AXI_ACP_AWVALID]]
+connect_debug_port u_ila_0/probe27 [get_nets [list design_1_i/processing_system7_0/S_AXI_ACP_BREADY]]
 create_debug_port u_ila_0 probe
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe28]
 set_property port_width 1 [get_debug_ports u_ila_0/probe28]
-connect_debug_port u_ila_0/probe28 [get_nets [list design_1_i/processing_system7_0/S_AXI_ACP_BREADY]]
+connect_debug_port u_ila_0/probe28 [get_nets [list design_1_i/processing_system7_0/S_AXI_ACP_BVALID]]
 create_debug_port u_ila_0 probe
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe29]
 set_property port_width 1 [get_debug_ports u_ila_0/probe29]
-connect_debug_port u_ila_0/probe29 [get_nets [list design_1_i/processing_system7_0/S_AXI_ACP_BVALID]]
+connect_debug_port u_ila_0/probe29 [get_nets [list design_1_i/processing_system7_0/S_AXI_ACP_RLAST]]
 create_debug_port u_ila_0 probe
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe30]
 set_property port_width 1 [get_debug_ports u_ila_0/probe30]
-connect_debug_port u_ila_0/probe30 [get_nets [list design_1_i/processing_system7_0/S_AXI_ACP_RLAST]]
+connect_debug_port u_ila_0/probe30 [get_nets [list design_1_i/processing_system7_0/S_AXI_ACP_RREADY]]
 create_debug_port u_ila_0 probe
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe31]
 set_property port_width 1 [get_debug_ports u_ila_0/probe31]
-connect_debug_port u_ila_0/probe31 [get_nets [list design_1_i/processing_system7_0/S_AXI_ACP_RREADY]]
+connect_debug_port u_ila_0/probe31 [get_nets [list design_1_i/processing_system7_0/S_AXI_ACP_RVALID]]
 create_debug_port u_ila_0 probe
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe32]
 set_property port_width 1 [get_debug_ports u_ila_0/probe32]
-connect_debug_port u_ila_0/probe32 [get_nets [list design_1_i/processing_system7_0/S_AXI_ACP_RVALID]]
+connect_debug_port u_ila_0/probe32 [get_nets [list design_1_i/processing_system7_0/S_AXI_ACP_WLAST]]
 create_debug_port u_ila_0 probe
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe33]
 set_property port_width 1 [get_debug_ports u_ila_0/probe33]
-connect_debug_port u_ila_0/probe33 [get_nets [list design_1_i/processing_system7_0/S_AXI_ACP_WLAST]]
+connect_debug_port u_ila_0/probe33 [get_nets [list design_1_i/processing_system7_0/S_AXI_ACP_WREADY]]
 create_debug_port u_ila_0 probe
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe34]
 set_property port_width 1 [get_debug_ports u_ila_0/probe34]
-connect_debug_port u_ila_0/probe34 [get_nets [list design_1_i/processing_system7_0/S_AXI_ACP_WREADY]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe35]
-set_property port_width 1 [get_debug_ports u_ila_0/probe35]
-connect_debug_port u_ila_0/probe35 [get_nets [list design_1_i/processing_system7_0/S_AXI_ACP_WVALID]]
+connect_debug_port u_ila_0/probe34 [get_nets [list design_1_i/processing_system7_0/S_AXI_ACP_WVALID]]
+
+
+set_property MARK_DEBUG false [get_nets design_1_i/processing_system7_0/S_AXI_ACP_ACLK]
 set_property C_CLK_INPUT_FREQ_HZ 300000000 [get_debug_cores dbg_hub]
 set_property C_ENABLE_CLK_DIVIDER false [get_debug_cores dbg_hub]
 set_property C_USER_SCAN_CHAIN 1 [get_debug_cores dbg_hub]
