@@ -1,7 +1,7 @@
 /*
  * main.c
  *
- *  Created on: 2018¦~6¤ë12¤é
+ *  Created on: 2018/6/12
  *      Author: User
  */
 #include "xtime_l.h"
@@ -62,25 +62,29 @@ uint8_t zero[1920] = {0};
 
 int main(){
 	printf("Hello world %p\n", pic[0]);
+	long t0 = getRunTime();
 	for (int i = 0; i < 1080; i++) {
 		for (int j = 0; j < 1920; j++) {
 			pic[i][j] = i*j;
 		}
 	}
-	long t0 = getRunTime();
-	for (int i = 0; i < 1080; i++) {
-		testSpeed(pic[i], pic[i], pic2[i], 1920);
-	}
-	for (int i = 0; i < 1080; i++) {
-		testSpeed(pic2[i], pic[i], pic[i], 1920);
-	}
+	//Xil_DCacheFlush();
 	long t1 = getRunTime();
-	printf("took %ldus\n", t1 - t0);
+    Xil_DCacheDisable();
 	for (int i = 0; i < 1080; i++) {
-		for (int j = 0; j < 1080; j++) {
-			uint8_t expect = i * j * 3;
+		uint32_t t = (uint32_t) pic[i];
+
+		testSpeed(pic[i], pic[i], pic[i], 1920);
+	}
+	long t2 = getRunTime();
+	Xil_DCacheEnable();
+	printf("initialize: %ldus\n", t1 - t0);
+	printf("HW copy test: %ldus\n", t2 - t1);
+	for (int i = 0; i < 1080; i++) {
+		for (int j = 0; j < 1920; j++) {
+			uint8_t expect = i * j * 2;
 			if (pic[i][j] != expect) {
-				printf("%d %d %x %d\n", i, j, &pic[i][j], pic[i][j]);
+				printf("%d %d %p %d\n", i, j, &pic[i][j], pic[i][j]);
 			}
 		}
 	}

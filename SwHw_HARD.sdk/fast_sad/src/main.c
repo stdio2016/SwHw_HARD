@@ -70,12 +70,20 @@ int main(){
 	}
 	//Xil_DCacheFlush();
 	long t1 = getRunTime();
-    Xil_DCacheDisable();
+    //Xil_DCacheDisable();
 	for (int i = 0; i < 1080; i++) {
-		testSpeed(pic[i], pic[i], pic[i], 1920);
+		uint32_t addr = (uint32_t) pic[i];
+		uint32_t off = 0x400 - (0x3ff & addr);
+		if (off >= 1920) {
+			testSpeed(pic[i], pic[i], pic[i], 1920);
+		}
+		else {
+			testSpeed(pic[i], pic[i], pic[i], off);
+			testSpeed(pic[i]+off, pic[i]+off, pic[i]+off, 1920 - off);
+		}
 	}
 	long t2 = getRunTime();
-	Xil_DCacheEnable();
+	//Xil_DCacheEnable();
 	printf("initialize: %ldus\n", t1 - t0);
 	printf("HW copy test: %ldus\n", t2 - t1);
 	for (int i = 0; i < 1080; i++) {
