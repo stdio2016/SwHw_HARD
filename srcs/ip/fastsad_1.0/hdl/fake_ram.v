@@ -38,7 +38,7 @@ module fake_ram #
 		input wire  s_axi_rready
   );
 
-reg [31:0] mem[0:1023];
+reg [31:0] mem[0:2047];
 reg [31:0] raddr;
 reg [8:0] rburst;
 reg [2:0] delay;
@@ -53,7 +53,7 @@ assign yes2 = wdelay == 0 && s_axi_wvalid;
 
 // fill pattern in memory
 integer i;
-initial for (i = 0; i < 1024; i = i+1) begin
+initial for (i = 0; i < 2048; i = i+1) begin
   mem[i] = i*4 * 100;
 end
 

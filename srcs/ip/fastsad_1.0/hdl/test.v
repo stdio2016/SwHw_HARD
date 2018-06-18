@@ -183,8 +183,8 @@ initial begin
   @(posedge clock);
   $display("test: read into row 0");
   write(4, 0); // to_write
-  write(8, 600); // len_copy
-  write(12, 480); // src_addr
+  write(8, 32); // len_copy
+  write(12, 4092); // src_addr
   write(20, 0); // dst_row
   
   write(0, 1); // hw_active
@@ -193,8 +193,8 @@ initial begin
 
   $display("test: read into row 1");
   write(4, 0); // to_write
-  write(8, 600); // len_copy
-  write(12, 480); // src_addr
+  write(8, 32); // len_copy
+  write(12, 4092); // src_addr
   write(20, 1); // dst_row
   
   write(0, 1); // hw_active
@@ -203,8 +203,8 @@ initial begin
   
   $display("test: write");
   write(4, 1); // to_write
-  write(8, 600); // len_copy
-  write(16, 480); //dst_addr
+  write(8, 32); // len_copy
+  write(16, 4092); //dst_addr
   
   write(0, 1); // hw_active
   read(0, ans);

@@ -106,9 +106,13 @@
 reg  mem_active;
 wire to_write;
 wire  [C_M00_AXI_DATA_WIDTH-1:0] dst_addr;
-reg   [7:0]                      write_data;
+reg   [31:0]                     write_data;
 reg   [MY_BUF_ADDR_WIDTH-1:0]    write_col_index[0:1];
 reg                              write_enable[0:2];
+reg   [1:0]                      write_roll;
+
+wire  [7:0]  add_result = col_data[0+:8] + col_data[8+:8];
+wire  write_really_enable = write_enable[2] && write_roll == 0;
 
 wire  [C_M00_AXI_DATA_WIDTH-1:0] src_addr;
 wire  [5:0]                      dst_row;
@@ -183,7 +187,7 @@ reg   hw_done;
     .dst_addr(dst_addr),
     .write_data(write_data),
     .write_col(write_col_index[1]),
-    .write_enable(write_enable[2]),
+    .write_enable(write_really_enable),
     // read from main memory
     .src_addr(src_addr),
     .dst_row(dst_row),
@@ -255,8 +259,14 @@ always @(posedge s00_axi_aclk) begin
   write_enable[1] <= write_enable[0];
   
   write_col_index[1] <= write_col_index[0];
-  write_data <= col_data[0+:8] + col_data[8+:8];
+  if (s00_axi_aresetn == 0) begin
+    write_data <= 0;
+  end
+  else begin
+    write_data <= {add_result , write_data[8 +: 24]};
+  end
   write_enable[2] <= write_enable[1];
+  write_roll <= state == Init_compute || state == Idle ? 0 : write_roll + write_enable[1];
 end
 
 always @(posedge s00_axi_aclk) begin
@@ -264,6 +274,7 @@ always @(posedge s00_axi_aclk) begin
     hw_done <= 0;
     mem_active <= 0;
     state <= Idle;
+    write_enable[0] <= 0;
   end
   else begin
     case (state)

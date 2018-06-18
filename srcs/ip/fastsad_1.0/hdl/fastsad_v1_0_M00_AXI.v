@@ -37,7 +37,7 @@
     input wire                           to_write,
     // write to main memory
     input wire  [C_M_AXI_DATA_WIDTH-1:0] dst_addr,
-    input wire  [7:0]                    write_data,
+    input wire  [31:0]                   write_data,
     input wire  [MY_BUF_ADDR_WIDTH-1:0]  write_col,
     input wire                           write_enable,
     // read from main memory
@@ -213,6 +213,7 @@
   reg  	axi_rready;
   //write beat count in a burst
   reg [C_TRANSACTIONS_NUM : 0] 	write_index;
+  reg [C_TRANSACTIONS_NUM : 0] 	write_index_next;
   //read beat count in a burst
   reg [C_TRANSACTIONS_NUM : 0] 	read_index;
   //size of C_M_AXI_BURST_LEN length burst in bytes
@@ -432,7 +433,7 @@ reg [MY_BUF_ADDR_WIDTH-3 : 0] read_write_base;
   // WVALID logic, similar to the axi_awvalid always block above
     always @(posedge M_AXI_ACLK)
     begin
-      if (M_AXI_ARESETN == 0 || init_txn_pulse == 1'b1 )
+      if (M_AXI_ARESETN == 0 || init_txn_pulse == 1'b1 || mst_exec_state == COPY_DONE)
         begin
           axi_wlast <= 1'b0;
         end
@@ -457,30 +458,35 @@ reg [MY_BUF_ADDR_WIDTH-3 : 0] read_write_base;
 
   /* Burst length counter. Uses extra counter register bit to indicate terminal
    count to reduce decode logic */
-    always @(posedge M_AXI_ACLK)
+    always @(*)
     begin
       if (M_AXI_ARESETN == 0 || init_txn_pulse == 1'b1 || start_single_burst_write == 1'b1)
         begin
-          write_index <= 0;
+          write_index_next = 0;
         end
       else if (wnext && (write_index != burst_len-1))
         begin
-          write_index <= write_index + 1;
+          write_index_next = write_index + 1;
         end
       else
-        write_index <= write_index;
+        write_index_next <= write_index;
+    end
+    
+    always @(posedge M_AXI_ACLK)
+    begin
+      write_index <= write_index_next;
     end
 
 
   /* Write Data Generator */
-    always @(*)
+    always @(posedge M_AXI_ACLK)
     begin
       if (M_AXI_ARESETN == 0 || init_txn_pulse == 1)
-        axi_wdata = 0;
+        axi_wdata <= 0;
       else if (mst_exec_state == INIT_WRITE)
-        axi_wdata = write_buffer[read_write_base + write_index];
+        axi_wdata <= write_buffer[read_write_base + write_index_next];
       else
-        axi_wdata = axi_wdata;
+        axi_wdata <= axi_wdata;
     end
 
 
@@ -641,6 +647,18 @@ reg [MY_BUF_ADDR_WIDTH-3 : 0] read_write_base;
   //Flag any read response errors
     assign read_resp_error = axi_rready & M_AXI_RVALID & M_AXI_RRESP[1];
 
+  // calculate maximum burst sizes
+  function [C_M_AXI_DATA_WIDTH:0] Max_burst_size;
+    input [31:0] remain_words;
+    input [31:0] addr;
+    reg [10:0] boundary;
+    begin
+      Max_burst_size = remain_words < C_M_AXI_BURST_LEN ? remain_words : C_M_AXI_BURST_LEN;
+      boundary = (13'h1000 - (addr & 13'hfff))>>2;
+      Max_burst_size = Max_burst_size < boundary ? Max_burst_size : boundary;
+    end
+  endfunction
+
 
     //implement master command interface state machine
 
@@ -668,7 +686,7 @@ reg [MY_BUF_ADDR_WIDTH-3 : 0] read_write_base;
               if ( init_txn_pulse == 1'b1)
                 begin
                   remain_to_copy <= len_copy>>2;
-                  burst_len <= len_copy>>2 < C_M_AXI_BURST_LEN ? len_copy>>2 : C_M_AXI_BURST_LEN;
+                  burst_len <= Max_burst_size(len_copy>>2, src_addr);
                   mst_exec_state  <= to_write ? INIT_WRITE : INIT_READ;
                   hw_done <= 0;
                   read_write_base <= 0;
@@ -742,7 +760,7 @@ reg [MY_BUF_ADDR_WIDTH-3 : 0] read_write_base;
                 end
                 else begin
                   mst_exec_state <= to_write ? INIT_WRITE : INIT_READ;
-                  burst_len <= remain_to_copy < C_M_AXI_BURST_LEN ? remain_to_copy : C_M_AXI_BURST_LEN;
+                  burst_len <= Max_burst_size(remain_to_copy, to_write ? axi_awaddr : axi_araddr);
                 end
               end
             default :
@@ -835,7 +853,7 @@ reg [MY_BUF_ADDR_WIDTH-3 : 0] read_write_base;
   always @(posedge M_AXI_ACLK) begin
     read_col_prev <= read_col;
     if (write_enable) begin
-      write_buffer[write_col>>2][write_col[1:0]*8 +: 8] <= write_data;
+      write_buffer[write_col>>2] <= write_data;
     end
   end
 
