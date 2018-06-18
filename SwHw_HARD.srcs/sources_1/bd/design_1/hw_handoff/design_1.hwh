@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
-<EDKSYSTEM EDWVERSION="1.2" TIMESTAMP="Fri Jun 15 20:42:52 2018" VIVADOVERSION="2017.2">
+<EDKSYSTEM EDWVERSION="1.2" TIMESTAMP="Tue Jun 19 00:07:05 2018" VIVADOVERSION="2017.2">
 
   <SYSTEMINFO ARCH="zynq" DEVICE="7z020" NAME="design_1" PACKAGE="clg484" SPEEDGRADE="-1"/>
 
@@ -1135,13 +1135,13 @@
         <DOCUMENT SOURCE="http://www.xilinx.com/cgi-bin/docs/ipdoc?c=processing_system7;v=v5_3;d=pg082-processing-system7.pdf"/>
       </DOCUMENTS>
       <ADDRESSBLOCKS>
+        <ADDRESSBLOCK ACCESS="" INTERFACE="S_AXI_ACP" NAME="ACP_QSPI_LINEAR" RANGE="16777216" USAGE="memory"/>
+      </ADDRESSBLOCKS>
+      <ADDRESSBLOCKS>
         <ADDRESSBLOCK ACCESS="" INTERFACE="S_AXI_ACP" NAME="ACP_M_AXI_GP0" RANGE="0x40000000" USAGE="register"/>
       </ADDRESSBLOCKS>
       <ADDRESSBLOCKS>
         <ADDRESSBLOCK ACCESS="" INTERFACE="S_AXI_ACP" NAME="ACP_IOP" RANGE="0x00400000" USAGE="register"/>
-      </ADDRESSBLOCKS>
-      <ADDRESSBLOCKS>
-        <ADDRESSBLOCK ACCESS="" INTERFACE="S_AXI_ACP" NAME="ACP_QSPI_LINEAR" RANGE="16777216" USAGE="memory"/>
       </ADDRESSBLOCKS>
       <ADDRESSBLOCKS>
         <ADDRESSBLOCK ACCESS="" INTERFACE="S_AXI_ACP" NAME="ACP_DDR_LOWOCM" RANGE="536870912" USAGE="memory"/>
@@ -2473,12 +2473,12 @@
             <CONNECTION INSTANCE="rst_ps7_0_100M" PORT="slowest_sync_clk"/>
             <CONNECTION INSTANCE="processing_system7_0" PORT="M_AXI_GP0_ACLK"/>
             <CONNECTION INSTANCE="axi_smc" PORT="aclk"/>
-            <CONNECTION INSTANCE="fastsad_0" PORT="s00_axi_aclk"/>
-            <CONNECTION INSTANCE="fastsad_0" PORT="m00_axi_aclk"/>
+            <CONNECTION INSTANCE="processing_system7_0" PORT="S_AXI_ACP_ACLK"/>
             <CONNECTION INSTANCE="ps7_0_axi_periph" PORT="S00_ACLK"/>
             <CONNECTION INSTANCE="ps7_0_axi_periph" PORT="M00_ACLK"/>
             <CONNECTION INSTANCE="ps7_0_axi_periph" PORT="ACLK"/>
-            <CONNECTION INSTANCE="processing_system7_0" PORT="S_AXI_ACP_ACLK"/>
+            <CONNECTION INSTANCE="fastsad_0" PORT="s00_axi_aclk"/>
+            <CONNECTION INSTANCE="fastsad_0" PORT="m00_axi_aclk"/>
           </CONNECTIONS>
         </PORT>
         <PORT DIR="O" NAME="FCLK_RESET0_N" SIGIS="rst" SIGNAME="processing_system7_0_FCLK_RESET0_N">
@@ -3465,10 +3465,10 @@
         <PORT DIR="O" LEFT="0" NAME="peripheral_aresetn" RIGHT="0" SIGIS="rst" SIGNAME="rst_ps7_0_100M_peripheral_aresetn">
           <CONNECTIONS>
             <CONNECTION INSTANCE="axi_smc" PORT="aresetn"/>
-            <CONNECTION INSTANCE="fastsad_0" PORT="s00_axi_aresetn"/>
-            <CONNECTION INSTANCE="fastsad_0" PORT="m00_axi_aresetn"/>
             <CONNECTION INSTANCE="ps7_0_axi_periph" PORT="S00_ARESETN"/>
             <CONNECTION INSTANCE="ps7_0_axi_periph" PORT="M00_ARESETN"/>
+            <CONNECTION INSTANCE="fastsad_0" PORT="s00_axi_aresetn"/>
+            <CONNECTION INSTANCE="fastsad_0" PORT="m00_axi_aresetn"/>
           </CONNECTIONS>
         </PORT>
       </PORTS>
