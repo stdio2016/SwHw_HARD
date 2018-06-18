@@ -73,7 +73,7 @@ int main(){
     //Xil_DCacheDisable();
 	for (int i = 0; i < 1080; i++) {
 		uint32_t addr = (uint32_t) pic[i];
-		uint32_t off = 0x400 - (0x3ff & addr);
+		uint32_t off = 0x1000 - (0xfff & addr);
 		if (off >= 1920) {
 			testSpeed(pic[i], pic[i], pic[i], 1920);
 		}
