@@ -8,8 +8,12 @@ SwHw_HARD.sdk/*/Debug
 SwHw_HARD.sdk/*/Release
 SwHw_HARD.sdk/*_bsp/ps*_cortexa9_*
 SwHw_HARD.sdk/.metadata/.plugins/org.eclipse.cdt.core
+SwHw_HARD.sdk/.metadata/.plugins/org.eclipse.cdt.make.core
 SwHw_HARD.sdk/.metadata/.plugins/org.eclipse.core.resources
+SwHw_HARD.sdk/.metadata/.plugins/org.eclipse.debug.core
 SwHw_HARD.sdk/.metadata/.plugins/org.eclipse.e4.workbench/workbench.xmi
+SwHw_HARD.sdk/.metadata/.plugins/org.eclipse.rse.core
+SwHw_HARD.sdk/.metadata/.plugins/org.eclipse.tcf.debug
 SwHw_HARD.sdk/.metadata/.plugins/org.eclipse.ui.*
 SwHw_HARD.sdk/.metadata/.plugins/com.xilinx.sdk.hw.ui
 SwHw_HARD.sdk/.metadata/.plugins/com.xilinx.sdk.utils
