@@ -167,8 +167,9 @@ CONFIG.NUM_SI {1} \
   # Create instance: fastsad_0, and set properties
   set fastsad_0 [ create_bd_cell -type ip -vlnv vendorname:user:fastsad:1.0 fastsad_0 ]
   set_property -dict [ list \
-CONFIG.C_M00_AXI_ARUSER_WIDTH {1} \
-CONFIG.C_M00_AXI_AWUSER_WIDTH {1} \
+CONFIG.C_M00_AXI_ARUSER_WIDTH {5} \
+CONFIG.C_M00_AXI_AWUSER_WIDTH {5} \
+CONFIG.C_M00_AXI_BUSER_WIDTH {0} \
 CONFIG.C_M00_AXI_RUSER_WIDTH {4} \
 CONFIG.C_M00_AXI_WUSER_WIDTH {4} \
 CONFIG.MY_BUF_ADDR_WIDTH {11} \

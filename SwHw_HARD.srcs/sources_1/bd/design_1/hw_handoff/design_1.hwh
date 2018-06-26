@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
-<EDKSYSTEM EDWVERSION="1.2" TIMESTAMP="Tue Jun 19 00:07:05 2018" VIVADOVERSION="2017.2">
+<EDKSYSTEM EDWVERSION="1.2" TIMESTAMP="Tue Jun 26 10:58:20 2018" VIVADOVERSION="2017.2">
 
   <SYSTEMINFO ARCH="zynq" DEVICE="7z020" NAME="design_1" PACKAGE="clg484" SPEEDGRADE="-1"/>
 
@@ -144,7 +144,7 @@
             <CONNECTION INSTANCE="fastsad_0" PORT="m00_axi_awqos"/>
           </CONNECTIONS>
         </PORT>
-        <PORT DIR="I" LEFT="0" NAME="S00_AXI_awuser" RIGHT="0" SIGIS="undef" SIGNAME="axi_smc_S00_AXI_awuser">
+        <PORT DIR="I" LEFT="4" NAME="S00_AXI_awuser" RIGHT="0" SIGIS="undef" SIGNAME="axi_smc_S00_AXI_awuser">
           <CONNECTIONS>
             <CONNECTION INSTANCE="fastsad_0" PORT="m00_axi_awuser"/>
           </CONNECTIONS>
@@ -197,11 +197,6 @@
         <PORT DIR="O" LEFT="1" NAME="S00_AXI_bresp" RIGHT="0" SIGIS="undef" SIGNAME="axi_smc_S00_AXI_bresp">
           <CONNECTIONS>
             <CONNECTION INSTANCE="fastsad_0" PORT="m00_axi_bresp"/>
-          </CONNECTIONS>
-        </PORT>
-        <PORT DIR="O" LEFT="0" NAME="S00_AXI_buser" RIGHT="0" SIGIS="undef" SIGNAME="axi_smc_S00_AXI_buser">
-          <CONNECTIONS>
-            <CONNECTION INSTANCE="fastsad_0" PORT="m00_axi_buser"/>
           </CONNECTIONS>
         </PORT>
         <PORT DIR="O" NAME="S00_AXI_bvalid" SIGIS="undef" SIGNAME="axi_smc_S00_AXI_bvalid">
@@ -259,7 +254,7 @@
             <CONNECTION INSTANCE="fastsad_0" PORT="m00_axi_arqos"/>
           </CONNECTIONS>
         </PORT>
-        <PORT DIR="I" LEFT="0" NAME="S00_AXI_aruser" RIGHT="0" SIGIS="undef" SIGNAME="axi_smc_S00_AXI_aruser">
+        <PORT DIR="I" LEFT="4" NAME="S00_AXI_aruser" RIGHT="0" SIGIS="undef" SIGNAME="axi_smc_S00_AXI_aruser">
           <CONNECTIONS>
             <CONNECTION INSTANCE="fastsad_0" PORT="m00_axi_aruser"/>
           </CONNECTIONS>
@@ -349,7 +344,7 @@
             <CONNECTION INSTANCE="processing_system7_0" PORT="S_AXI_ACP_AWQOS"/>
           </CONNECTIONS>
         </PORT>
-        <PORT DIR="O" LEFT="0" NAME="M00_AXI_awuser" RIGHT="0" SIGIS="undef" SIGNAME="axi_smc_M00_AXI_awuser">
+        <PORT DIR="O" LEFT="4" NAME="M00_AXI_awuser" RIGHT="0" SIGIS="undef" SIGNAME="axi_smc_M00_AXI_awuser">
           <CONNECTIONS>
             <CONNECTION INSTANCE="processing_system7_0" PORT="S_AXI_ACP_AWUSER"/>
           </CONNECTIONS>
@@ -394,7 +389,6 @@
             <CONNECTION INSTANCE="processing_system7_0" PORT="S_AXI_ACP_BRESP"/>
           </CONNECTIONS>
         </PORT>
-        <PORT DIR="I" LEFT="0" NAME="M00_AXI_buser" RIGHT="0" SIGIS="undef"/>
         <PORT DIR="I" NAME="M00_AXI_bvalid" SIGIS="undef" SIGNAME="axi_smc_M00_AXI_bvalid">
           <CONNECTIONS>
             <CONNECTION INSTANCE="processing_system7_0" PORT="S_AXI_ACP_BVALID"/>
@@ -445,7 +439,7 @@
             <CONNECTION INSTANCE="processing_system7_0" PORT="S_AXI_ACP_ARQOS"/>
           </CONNECTIONS>
         </PORT>
-        <PORT DIR="O" LEFT="0" NAME="M00_AXI_aruser" RIGHT="0" SIGIS="undef" SIGNAME="axi_smc_M00_AXI_aruser">
+        <PORT DIR="O" LEFT="4" NAME="M00_AXI_aruser" RIGHT="0" SIGIS="undef" SIGNAME="axi_smc_M00_AXI_aruser">
           <CONNECTIONS>
             <CONNECTION INSTANCE="processing_system7_0" PORT="S_AXI_ACP_ARUSER"/>
           </CONNECTIONS>
@@ -493,11 +487,11 @@
           <PARAMETER NAME="FREQ_HZ" VALUE="100000000"/>
           <PARAMETER NAME="ID_WIDTH" VALUE="1"/>
           <PARAMETER NAME="ADDR_WIDTH" VALUE="32"/>
-          <PARAMETER NAME="AWUSER_WIDTH" VALUE="1"/>
-          <PARAMETER NAME="ARUSER_WIDTH" VALUE="1"/>
+          <PARAMETER NAME="AWUSER_WIDTH" VALUE="5"/>
+          <PARAMETER NAME="ARUSER_WIDTH" VALUE="5"/>
           <PARAMETER NAME="WUSER_WIDTH" VALUE="4"/>
           <PARAMETER NAME="RUSER_WIDTH" VALUE="4"/>
-          <PARAMETER NAME="BUSER_WIDTH" VALUE="1"/>
+          <PARAMETER NAME="BUSER_WIDTH" VALUE="0"/>
           <PARAMETER NAME="READ_WRITE_MODE" VALUE="READ_WRITE"/>
           <PARAMETER NAME="HAS_BURST" VALUE="1"/>
           <PARAMETER NAME="HAS_LOCK" VALUE="1"/>
@@ -539,7 +533,6 @@
             <PORTMAP LOGICAL="WREADY" PHYSICAL="S00_AXI_wready"/>
             <PORTMAP LOGICAL="BID" PHYSICAL="S00_AXI_bid"/>
             <PORTMAP LOGICAL="BRESP" PHYSICAL="S00_AXI_bresp"/>
-            <PORTMAP LOGICAL="BUSER" PHYSICAL="S00_AXI_buser"/>
             <PORTMAP LOGICAL="BVALID" PHYSICAL="S00_AXI_bvalid"/>
             <PORTMAP LOGICAL="BREADY" PHYSICAL="S00_AXI_bready"/>
             <PORTMAP LOGICAL="ARID" PHYSICAL="S00_AXI_arid"/>
@@ -569,11 +562,11 @@
           <PARAMETER NAME="FREQ_HZ" VALUE="100000000"/>
           <PARAMETER NAME="ID_WIDTH" VALUE="0"/>
           <PARAMETER NAME="ADDR_WIDTH" VALUE="32"/>
-          <PARAMETER NAME="AWUSER_WIDTH" VALUE="1"/>
-          <PARAMETER NAME="ARUSER_WIDTH" VALUE="1"/>
+          <PARAMETER NAME="AWUSER_WIDTH" VALUE="5"/>
+          <PARAMETER NAME="ARUSER_WIDTH" VALUE="5"/>
           <PARAMETER NAME="WUSER_WIDTH" VALUE="0"/>
           <PARAMETER NAME="RUSER_WIDTH" VALUE="0"/>
-          <PARAMETER NAME="BUSER_WIDTH" VALUE="1"/>
+          <PARAMETER NAME="BUSER_WIDTH" VALUE="0"/>
           <PARAMETER NAME="READ_WRITE_MODE" VALUE="READ_WRITE"/>
           <PARAMETER NAME="HAS_BURST" VALUE="1"/>
           <PARAMETER NAME="HAS_LOCK" VALUE="1"/>
@@ -612,7 +605,6 @@
             <PORTMAP LOGICAL="WVALID" PHYSICAL="M00_AXI_wvalid"/>
             <PORTMAP LOGICAL="WREADY" PHYSICAL="M00_AXI_wready"/>
             <PORTMAP LOGICAL="BRESP" PHYSICAL="M00_AXI_bresp"/>
-            <PORTMAP LOGICAL="BUSER" PHYSICAL="M00_AXI_buser"/>
             <PORTMAP LOGICAL="BVALID" PHYSICAL="M00_AXI_bvalid"/>
             <PORTMAP LOGICAL="BREADY" PHYSICAL="M00_AXI_bready"/>
             <PORTMAP LOGICAL="ARADDR" PHYSICAL="M00_AXI_araddr"/>
@@ -648,11 +640,11 @@
         <PARAMETER NAME="C_M00_AXI_ID_WIDTH" VALUE="1"/>
         <PARAMETER NAME="C_M00_AXI_ADDR_WIDTH" VALUE="32"/>
         <PARAMETER NAME="C_M00_AXI_DATA_WIDTH" VALUE="32"/>
-        <PARAMETER NAME="C_M00_AXI_AWUSER_WIDTH" VALUE="1"/>
-        <PARAMETER NAME="C_M00_AXI_ARUSER_WIDTH" VALUE="1"/>
+        <PARAMETER NAME="C_M00_AXI_AWUSER_WIDTH" VALUE="5"/>
+        <PARAMETER NAME="C_M00_AXI_ARUSER_WIDTH" VALUE="5"/>
         <PARAMETER NAME="C_M00_AXI_WUSER_WIDTH" VALUE="4"/>
         <PARAMETER NAME="C_M00_AXI_RUSER_WIDTH" VALUE="4"/>
-        <PARAMETER NAME="C_M00_AXI_BUSER_WIDTH" VALUE="1"/>
+        <PARAMETER NAME="C_M00_AXI_BUSER_WIDTH" VALUE="0"/>
         <PARAMETER NAME="MY_BUF_ADDR_WIDTH" VALUE="11"/>
         <PARAMETER NAME="Component_Name" VALUE="design_1_fastsad_0_0"/>
         <PARAMETER NAME="EDK_IPTYPE" VALUE="PERIPHERAL"/>
@@ -810,7 +802,7 @@
             <CONNECTION INSTANCE="axi_smc" PORT="S00_AXI_awqos"/>
           </CONNECTIONS>
         </PORT>
-        <PORT DIR="O" LEFT="0" NAME="m00_axi_awuser" RIGHT="0" SIGIS="undef" SIGNAME="axi_smc_S00_AXI_awuser">
+        <PORT DIR="O" LEFT="4" NAME="m00_axi_awuser" RIGHT="0" SIGIS="undef" SIGNAME="axi_smc_S00_AXI_awuser">
           <CONNECTIONS>
             <CONNECTION INSTANCE="axi_smc" PORT="S00_AXI_awuser"/>
           </CONNECTIONS>
@@ -863,11 +855,6 @@
         <PORT DIR="I" LEFT="1" NAME="m00_axi_bresp" RIGHT="0" SIGIS="undef" SIGNAME="axi_smc_S00_AXI_bresp">
           <CONNECTIONS>
             <CONNECTION INSTANCE="axi_smc" PORT="S00_AXI_bresp"/>
-          </CONNECTIONS>
-        </PORT>
-        <PORT DIR="I" LEFT="0" NAME="m00_axi_buser" RIGHT="0" SIGIS="undef" SIGNAME="axi_smc_S00_AXI_buser">
-          <CONNECTIONS>
-            <CONNECTION INSTANCE="axi_smc" PORT="S00_AXI_buser"/>
           </CONNECTIONS>
         </PORT>
         <PORT DIR="I" NAME="m00_axi_bvalid" SIGIS="undef" SIGNAME="axi_smc_S00_AXI_bvalid">
@@ -925,7 +912,7 @@
             <CONNECTION INSTANCE="axi_smc" PORT="S00_AXI_arqos"/>
           </CONNECTIONS>
         </PORT>
-        <PORT DIR="O" LEFT="0" NAME="m00_axi_aruser" RIGHT="0" SIGIS="undef" SIGNAME="axi_smc_S00_AXI_aruser">
+        <PORT DIR="O" LEFT="4" NAME="m00_axi_aruser" RIGHT="0" SIGIS="undef" SIGNAME="axi_smc_S00_AXI_aruser">
           <CONNECTIONS>
             <CONNECTION INSTANCE="axi_smc" PORT="S00_AXI_aruser"/>
           </CONNECTIONS>
@@ -1050,11 +1037,11 @@
           <PARAMETER NAME="FREQ_HZ" VALUE="100000000"/>
           <PARAMETER NAME="ID_WIDTH" VALUE="1"/>
           <PARAMETER NAME="ADDR_WIDTH" VALUE="32"/>
-          <PARAMETER NAME="AWUSER_WIDTH" VALUE="1"/>
-          <PARAMETER NAME="ARUSER_WIDTH" VALUE="1"/>
+          <PARAMETER NAME="AWUSER_WIDTH" VALUE="5"/>
+          <PARAMETER NAME="ARUSER_WIDTH" VALUE="5"/>
           <PARAMETER NAME="WUSER_WIDTH" VALUE="4"/>
           <PARAMETER NAME="RUSER_WIDTH" VALUE="4"/>
-          <PARAMETER NAME="BUSER_WIDTH" VALUE="1"/>
+          <PARAMETER NAME="BUSER_WIDTH" VALUE="0"/>
           <PARAMETER NAME="READ_WRITE_MODE" VALUE="READ_WRITE"/>
           <PARAMETER NAME="HAS_BURST" VALUE="1"/>
           <PARAMETER NAME="HAS_LOCK" VALUE="1"/>
@@ -1095,7 +1082,6 @@
             <PORTMAP LOGICAL="WREADY" PHYSICAL="m00_axi_wready"/>
             <PORTMAP LOGICAL="BID" PHYSICAL="m00_axi_bid"/>
             <PORTMAP LOGICAL="BRESP" PHYSICAL="m00_axi_bresp"/>
-            <PORTMAP LOGICAL="BUSER" PHYSICAL="m00_axi_buser"/>
             <PORTMAP LOGICAL="BVALID" PHYSICAL="m00_axi_bvalid"/>
             <PORTMAP LOGICAL="BREADY" PHYSICAL="m00_axi_bready"/>
             <PORTMAP LOGICAL="ARID" PHYSICAL="m00_axi_arid"/>
@@ -2474,11 +2460,11 @@
             <CONNECTION INSTANCE="processing_system7_0" PORT="M_AXI_GP0_ACLK"/>
             <CONNECTION INSTANCE="axi_smc" PORT="aclk"/>
             <CONNECTION INSTANCE="processing_system7_0" PORT="S_AXI_ACP_ACLK"/>
+            <CONNECTION INSTANCE="fastsad_0" PORT="s00_axi_aclk"/>
+            <CONNECTION INSTANCE="fastsad_0" PORT="m00_axi_aclk"/>
             <CONNECTION INSTANCE="ps7_0_axi_periph" PORT="S00_ACLK"/>
             <CONNECTION INSTANCE="ps7_0_axi_periph" PORT="M00_ACLK"/>
             <CONNECTION INSTANCE="ps7_0_axi_periph" PORT="ACLK"/>
-            <CONNECTION INSTANCE="fastsad_0" PORT="s00_axi_aclk"/>
-            <CONNECTION INSTANCE="fastsad_0" PORT="m00_axi_aclk"/>
           </CONNECTIONS>
         </PORT>
         <PORT DIR="O" NAME="FCLK_RESET0_N" SIGIS="rst" SIGNAME="processing_system7_0_FCLK_RESET0_N">
@@ -3465,10 +3451,10 @@
         <PORT DIR="O" LEFT="0" NAME="peripheral_aresetn" RIGHT="0" SIGIS="rst" SIGNAME="rst_ps7_0_100M_peripheral_aresetn">
           <CONNECTIONS>
             <CONNECTION INSTANCE="axi_smc" PORT="aresetn"/>
-            <CONNECTION INSTANCE="ps7_0_axi_periph" PORT="S00_ARESETN"/>
-            <CONNECTION INSTANCE="ps7_0_axi_periph" PORT="M00_ARESETN"/>
             <CONNECTION INSTANCE="fastsad_0" PORT="s00_axi_aresetn"/>
             <CONNECTION INSTANCE="fastsad_0" PORT="m00_axi_aresetn"/>
+            <CONNECTION INSTANCE="ps7_0_axi_periph" PORT="S00_ARESETN"/>
+            <CONNECTION INSTANCE="ps7_0_axi_periph" PORT="M00_ARESETN"/>
           </CONNECTIONS>
         </PORT>
       </PORTS>
