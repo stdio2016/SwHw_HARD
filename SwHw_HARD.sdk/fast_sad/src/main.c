@@ -60,7 +60,7 @@ uint8_t pic[1080][1920];
 uint8_t pic2[1080][1920];
 uint8_t zero[1920] = {0};
 
-int main(){
+int obsolete_main(){
 	printf("Hello world %p\n", pic[0]);
 	long t0 = getRunTime();
 	for (int i = 0; i < 1080; i++) {
