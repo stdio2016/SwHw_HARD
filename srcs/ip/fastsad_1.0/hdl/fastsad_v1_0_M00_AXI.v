@@ -469,7 +469,7 @@ reg [MY_BUF_ADDR_WIDTH-3 : 0] read_write_base;
           write_index_next = write_index + 1;
         end
       else
-        write_index_next <= write_index;
+        write_index_next = write_index;
     end
     
     always @(posedge M_AXI_ACLK)
