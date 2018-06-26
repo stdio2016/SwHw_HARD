@@ -38,6 +38,11 @@ long get_usec_time()
 	return (long) (time_tick / COUNTS_PER_USECOND);
 }
 
+long ticks_to_msec(uint64_t ticks)
+{
+	return (long) (ticks / (1000 * COUNTS_PER_USECOND));
+}
+
 /* function prototypes. */
 void median3x3(uint8 *image, int width, int height);
 int32 compute_sad(uint8 *im1, int w1, uint8 *im2, int w2, int h2, int row, int col);
@@ -49,6 +54,9 @@ int32 compute_sad_neon(uint8 *im1, int w1, uint8 *im2, int w2, int h2, int row, 
 
 /* SD card I/O variables */
 static FATFS fatfs;
+
+// Compute time
+uint64_t sad_time, matrix_to_array_time, insertion_sort_time;
 
 int main(int argc, char **argv)
 {
@@ -90,6 +98,10 @@ int main(int argc, char **argv)
     median3x3(group.pix, width, height);
     tick = get_usec_time() - tick;
     printf("done in %ld msec.\n", tick/1000);
+#ifdef TIMER_PROFILING
+    printf("matrix_to_array takes %ldms\n", ticks_to_msec(matrix_to_array_time));
+    printf("insertion_sort takes %ldms\n", ticks_to_msec(insertion_sort_time));
+#endif
 
     /* Perform face-matching */
     printf("3. Face-matching ... ");
@@ -98,6 +110,9 @@ int main(int argc, char **argv)
     tick = get_usec_time() - tick;
     printf("done in %ld msec.\n\n", tick/1000);
     printf("** Found the face at (%d, %d) with cost %ld\n\n", posx, posy, cost);
+#ifdef TIMER_PROFILING
+    printf("compute_sad takes %ldms\n\n", ticks_to_msec(sad_time));
+#endif
 
     /* free allocated memory */
     free(face.pix);
@@ -144,15 +159,31 @@ void median3x3(uint8 *image, int width, int height)
 {
     int   row, col;
     uint8 pix_array[9], *ptr;
+#ifdef TIMER_PROFILING
+    uint64_t t1, t2, t3;
+#endif
 
     for (row = 1; row < height-1; row++)
     {
         for (col = 1; col < width-1; col++)
         {
             ptr = image + row*width + col;
+#ifdef TIMER_PROFILING
+            XTime_GetTime(&t1);
+#endif
             matrix_to_array(pix_array, ptr, width);
+#ifdef TIMER_PROFILING
+            XTime_GetTime(&t2);
+#endif
             insertion_sort(pix_array, 9);
+#ifdef TIMER_PROFILING
+            XTime_GetTime(&t3);
+#endif
             *ptr = pix_array[4];
+#ifdef TIMER_PROFILING
+            matrix_to_array_time += t2 - t1;
+            insertion_sort_time += t3 - t2;
+#endif
         }
     }
 }
@@ -266,11 +297,20 @@ int32 match(CImage *group, CImage *face, int *posx, int *posy)
     {
         for (col = 0; col < group->width-face->width; col++)
         {
+#ifdef TIMER_PROFILING
+            uint64_t t1;
+            XTime_GetTime(&t1);
+#endif
             /* trying to compute the matching cost at (col, row) */
             //sad = compute_sad_neon(group->pix, group->width,
             //                  face->pix, face->width, face->height,
             //                  row, col, min_sad);
             sad = fastsad(group->pix, group->width, face->pix, row, col);
+#ifdef TIMER_PROFILING
+            uint64_t t2;
+            XTime_GetTime(&t2);
+            sad_time += t2 - t1;
+#endif
 
             /* if the matching cost is minimal, record it */
             if (sad <= min_sad)
