@@ -12,3 +12,16 @@ SAD 越小，就表示圖形越相似。
 我可以利用 Lab1 所學的方法來尋找效能瓶頸，並嘗試用 ZedBoard 上的資源來加速，接著說明各種方法的效果以及資源使用率。
 
 ## 二、尋找效能瓶頸
+在 Lab1 時，我有嘗試檢測效能，然而我當時使用 realtime timer 的方法有問題。
+我決定計時的函數有 `matrix_to_array`、`insertion_sort` 和 `compute_sad`，加上老師已經計時的 `median3x3` 和 `match`。
+
+用 Release 模式來編譯的話，原始程式的執行結果是
+```
+1. Reading images ... done in 803 msec.
+2. Median filtering ... done in 981 msec.
+3. Face-matching ... done in 20251 msec.
+
+** Found the face at (881, 826) with cost 3080
+```
+可見得老師已經寫好部份程序的計時。
+我把這個結果設為基準 (baseline)，其他的設計都和這個結果做比較。
