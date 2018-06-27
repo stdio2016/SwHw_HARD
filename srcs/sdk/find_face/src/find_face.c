@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include "image.h"
+#include <arm_neon.h>
 
 #include "xparameters.h"  /* SDK generated parameters */
 #include "xsdps.h"        /* for SD device driver     */
@@ -211,6 +212,45 @@ int32 compute_sad_neon(uint8 *image1, int w1, uint8 *image2, int w2, int h2,
     return sad;
 }
 
+int32 fastsad(uint8 *image1, int w1, uint8 *image2, int row, int col)
+{
+#ifdef __ARM_NEON
+    uint8x16_t f1,f2, g1,g2, dif1,dif2;
+    uint16x8_t acc1, acc2;
+    image1 += row*w1 + col;
+    acc1 = vdupq_n_u16(0);
+    acc2 = vdupq_n_u16(0);
+    g1 = vld1q_u8(image1);
+    f1 = vld1q_u8(image2);
+    g2 = vld1q_u8(image1 + 16);
+    f2 = vld1q_u8(image2 + 16);
+    int i;
+    for (i = 1; i < 32; i++) {
+        image1 += w1;
+        image2 += 32;
+        dif1 = vabdq_u8(f1, g1);
+        dif2 = vabdq_u8(f2, g2);
+        g1 = vld1q_u8(image1);
+        f1 = vld1q_u8(image2);
+        g2 = vld1q_u8(image1 + 16);
+        f2 = vld1q_u8(image2 + 16);
+        acc1 = vpadalq_u8(acc1, dif1);
+        acc2 = vpadalq_u8(acc2, dif2);
+    }
+    dif1 = vabdq_u8(f1, g1);
+    dif2 = vabdq_u8(f2, g2);
+    acc1 = vpadalq_u8(acc1, dif1);
+    acc2 = vpadalq_u8(acc2, dif2);
+    uint16x8_t some1 = vaddq_u16(acc1, acc2);
+    uint32x4_t some2 = vpaddlq_u16(some1);
+    uint32_t sads[4];
+    vst1q_u32(sads, some2);
+    return sads[0] + sads[1] + sads[2] + sads[3];
+#else
+    return compute_sad(image1, w1, image2, 32, 32, row, col);
+#endif
+}
+
 int32 match(CImage *group, CImage *face, int *posx, int *posy)
 {
     int  row, col;
@@ -226,9 +266,10 @@ int32 match(CImage *group, CImage *face, int *posx, int *posy)
             XTime_GetTime(&t1);
 #endif
             /* trying to compute the matching cost at (col, row) */
-            sad = compute_sad_neon(group->pix, group->width,
-                              face->pix, face->width, face->height,
-                              row, col, min_sad);
+            //sad = compute_sad_neon(group->pix, group->width,
+            //                  face->pix, face->width, face->height,
+            //                  row, col, min_sad);
+            sad = fastsad(group->pix, group->width, face->pix, row, col);
 #ifdef TIMER_PROFILING
             uint64_t t2;
             XTime_GetTime(&t2);
