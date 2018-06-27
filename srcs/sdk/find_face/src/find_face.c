@@ -98,10 +98,6 @@ int main(int argc, char **argv)
     median3x3(group.pix, width, height);
     tick = get_usec_time() - tick;
     printf("done in %ld msec.\n", tick/1000);
-#ifdef TIMER_PROFILING
-    printf("matrix_to_array takes %ldms\n", ticks_to_msec(matrix_to_array_time));
-    printf("insertion_sort takes %ldms\n", ticks_to_msec(insertion_sort_time));
-#endif
 
     /* Perform face-matching */
     printf("3. Face-matching ... ");
@@ -159,31 +155,15 @@ void median3x3(uint8 *image, int width, int height)
 {
     int   row, col;
     uint8 pix_array[9], *ptr;
-#ifdef TIMER_PROFILING
-    uint64_t t1, t2, t3;
-#endif
 
     for (row = 1; row < height-1; row++)
     {
         for (col = 1; col < width-1; col++)
         {
             ptr = image + row*width + col;
-#ifdef TIMER_PROFILING
-            XTime_GetTime(&t1);
-#endif
             matrix_to_array(pix_array, ptr, width);
-#ifdef TIMER_PROFILING
-            XTime_GetTime(&t2);
-#endif
             insertion_sort(pix_array, 9);
-#ifdef TIMER_PROFILING
-            XTime_GetTime(&t3);
-#endif
             *ptr = pix_array[4];
-#ifdef TIMER_PROFILING
-            matrix_to_array_time += t2 - t1;
-            insertion_sort_time += t3 - t2;
-#endif
         }
     }
 }
