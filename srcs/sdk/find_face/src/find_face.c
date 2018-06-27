@@ -1,3 +1,4 @@
+// modified by Yi-Feng Chen on 2018/06/27
 /* ///////////////////////////////////////////////////////////////////// */
 /*  File   : find_face.c                                                 */
 /*  Author : Chun-Jen Tsai                                               */
@@ -49,6 +50,9 @@ long ticks_to_msec(uint64_t ticks)
 void median3x3(uint8 *image, int width, int height);
 int32 compute_sad(uint8 *im1, int w1, uint8 *im2, int w2, int h2, int row, int col);
 int32 match(CImage *group, CImage *face, int *posx, int *posy);
+
+// faster way of finding match
+int32 compute_sad_neon(uint8 *im1, int w1, uint8 *im2, int w2, int h2, int row, int col, int32 current_min);
 
 /* SD card I/O variables */
 static FATFS fatfs;
@@ -186,6 +190,27 @@ int32 compute_sad(uint8 *image1, int w1, uint8 *image2, int w2, int h2,
     return sad;
 }
 
+int32 compute_sad_neon(uint8 *image1, int w1, uint8 *image2, int w2, int h2,
+                  int row, int col, int32 current_min)
+{
+    int  x, y;
+    //const uint8 const *img = image1 + row*w1 + col;
+    int32 sad = 0;
+
+    /* The program now runs 200% faster */
+    for (y = 0; y < h2; y++)
+    {
+        for (x = 0; x < w2; x++)
+        {
+            /* compute the sum of absolute difference */
+            //sad += abs(image2[y*w2+x] - img[y*w1+x]);
+               sad += abs(image2[y*w2+x] - image1[(row+y)*w1+(col+x)]);
+        }
+        if (sad > current_min) return INT32_MAX;
+    }
+    return sad;
+}
+
 int32 match(CImage *group, CImage *face, int *posx, int *posy)
 {
     int  row, col;
@@ -201,9 +226,9 @@ int32 match(CImage *group, CImage *face, int *posx, int *posy)
             XTime_GetTime(&t1);
 #endif
             /* trying to compute the matching cost at (col, row) */
-            sad = compute_sad(group->pix, group->width,
+            sad = compute_sad_neon(group->pix, group->width,
                               face->pix, face->width, face->height,
-                              row, col);
+                              row, col, min_sad);
 #ifdef TIMER_PROFILING
             uint64_t t2;
             XTime_GetTime(&t2);
