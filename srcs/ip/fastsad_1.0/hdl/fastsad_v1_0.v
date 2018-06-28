@@ -12,7 +12,7 @@
 
   // Parameters of Axi Slave Bus Interface S00_AXI
   parameter integer C_S00_AXI_DATA_WIDTH	= 32,
-  parameter integer C_S00_AXI_ADDR_WIDTH	= 5,
+  parameter integer C_S00_AXI_ADDR_WIDTH	= 6,
 
   // Parameters of Axi Master Bus Interface M00_AXI
   parameter  C_M00_AXI_TARGET_SLAVE_BASE_ADDR	= 32'h40000000,
@@ -103,28 +103,41 @@
   output wire  m00_axi_rready
   );
 // define wire name
-reg  mem_active;
-wire to_write;
-wire  [C_M00_AXI_DATA_WIDTH-1:0] dst_addr;
-reg   [31:0]                     write_data;
-reg   [MY_BUF_ADDR_WIDTH-1:0]    write_col_index[0:1];
-reg                              write_enable[0:2];
-reg   [1:0]                      write_roll;
-
-wire  [7:0]  add_result = col_data[0+:8] + col_data[8+:8];
-wire  write_really_enable = write_enable[2] && write_roll == 0;
-
-wire  [C_M00_AXI_DATA_WIDTH-1:0] src_addr;
-wire  [5:0]                      dst_row;
-reg   [MY_BUF_ADDR_WIDTH-1:0]    read_col_index;
-wire  [0:33*8-1]                 col_data;
-
-wire  [MY_BUF_ADDR_WIDTH-1:0]    len_copy;
-wire                             mem_done;
-
 wire  hw_active;
+wire  [2:0] feature;
+wire  [MY_BUF_ADDR_WIDTH-1:0]    len_copy;
+wire  [C_S00_AXI_DATA_WIDTH-1:0] src_addr;
+wire  [C_S00_AXI_DATA_WIDTH-1:0] dst_addr;
+wire  [5:0]                      dst_row;
 reg   hw_done;
+reg   [C_S00_AXI_DATA_WIDTH-1:0] min_sad;
+reg   [C_S00_AXI_DATA_WIDTH-1:0] min_sad_pos;
 
+reg                              mem_active;
+reg                              mem_to_write;
+wire  [C_M00_AXI_DATA_WIDTH-1:0] mem_dst_addr = dst_addr;
+reg   [31:0]                     mem_write_data;
+wire  [MY_BUF_ADDR_WIDTH-1:0]    mem_write_col;
+reg                              mem_write_enable;
+wire  [C_M00_AXI_DATA_WIDTH-1:0] mem_src_addr = src_addr;
+wire  [5:0]                      mem_dst_row = {1'b0, dst_row[4:0]};
+reg   [MY_BUF_ADDR_WIDTH-1:0]    mem_read_col;
+wire  [0:33*8-1]                 mem_col_data;
+reg   [MY_BUF_ADDR_WIDTH-1:0]    mem_len_copy;
+
+// for Compute_SAD
+wire [31:0] sad_out;
+wire        sad_valid;
+wire [10:0]  sad_col_out;
+// set face
+reg          face_wr_en;
+reg [2+10:0] face_wr_idx;
+reg [7:0]    face_wr_data;
+reg          face_select_en;
+wire [1:0]   face_select;
+
+reg pixel_ready;
+reg [MY_BUF_ADDR_WIDTH-1:0] mem_col_data_addr;
 // end of wire name
 
   
@@ -135,7 +148,7 @@ reg   hw_done;
   .C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
   ) fastsad_v1_0_S00_AXI_inst (
     .hw_active(hw_active),
-    .to_write(to_write),
+    .feature(feature),
     // write to main memory
     .dst_addr(dst_addr),
     // read from main memory
@@ -144,6 +157,9 @@ reg   hw_done;
     // both read and write
     .len_copy(len_copy),
     .hw_done(hw_done),
+    .face_select(face_select),
+    .min_sad(min_sad),
+    .min_sad_pos(min_sad_pos),
   .S_AXI_ACLK(s00_axi_aclk),
   .S_AXI_ARESETN(s00_axi_aresetn),
   .S_AXI_AWADDR(s00_axi_awaddr),
@@ -182,19 +198,19 @@ reg   hw_done;
   .C_M_AXI_BUSER_WIDTH(C_M00_AXI_BUSER_WIDTH)
   ) fastsad_v1_0_M00_AXI_inst (
     .hw_active(mem_active),
-    .to_write(to_write),
+    .to_write(mem_to_write),
     // write to main memory
-    .dst_addr(dst_addr),
-    .write_data(write_data),
-    .write_col(write_col_index[1]),
-    .write_enable(write_really_enable),
+    .dst_addr(mem_dst_addr),
+    .write_data(mem_write_data),
+    .write_col(mem_write_col),
+    .write_enable(mem_write_enable),
     // read from main memory
-    .src_addr(src_addr),
-    .dst_row(dst_row),
-    .read_col(read_col_index),
-    .col_data(col_data),
+    .src_addr(mem_src_addr),
+    .dst_row(mem_dst_row),
+    .read_col(mem_read_col),
+    .col_data(mem_col_data),
     // both read and write
-    .len_copy(len_copy),
+    .len_copy(mem_len_copy),
     .hw_done(mem_done),
   .M_AXI_ACLK(m00_axi_aclk),
   .M_AXI_ARESETN(m00_axi_aresetn),
@@ -250,83 +266,116 @@ localparam Reading = 2;
 localparam Init_compute = 3;
 localparam Compute = 4;
 localparam Finish_compute = 5;
-localparam Init_write = 6;
-localparam Write = 7;
+localparam Init_write_face = 6;
+localparam Write_face = 7;
 localparam Done = 8;
+localparam Try_read = 9;
+localparam Try_compute = 10;
+localparam Done2 = 11;
+
+pipe_sad #(
+  .FACE_HEIGHT_BITS(5),
+  .FACE_WIDTH_BITS(5),
+  .GROUP_WIDTH_BITS(11),
+  .FACE_COUNT_BITS(2)
+) Compute_SAD (
+  .clock(s00_axi_aclk),
+  .reset(s00_axi_aresetn),
+  .rotated_image(mem_col_data[0:255]),
+  .row(dst_row[4:0]),
+  .ready(pixel_ready),
+  .col_in(mem_col_data_addr),
+  .sad_out(sad_out),
+  .valid(sad_valid),
+  .col_out(sad_col_out),
+// set face
+  .face_wr_en(state == Write_face),
+  .face_wr_row_idx({face_select, mem_col_data_addr[9:5]}),
+  .face_wr_col_idx(mem_col_data_addr[4:0]),
+  .face_wr_data(mem_col_data[0:7]),
+  .face_select_en(state == Init_compute),
+  .face_select(face_select)
+);
+
+always @ (posedge s00_axi_aclk) begin
+  if (s00_axi_aresetn == 0 || state == Init_compute) begin
+    min_sad <= -1;
+    min_sad_pos <= 0;
+  end
+  else begin 
+    if (sad_out <= min_sad && sad_valid && sad_col_out >= 31) begin
+      min_sad <= sad_out;
+      min_sad_pos <= sad_col_out;
+    end
+  end
+end
 
 always @(posedge s00_axi_aclk) begin
-  write_col_index[0] <= read_col_index;
-  write_enable[1] <= write_enable[0];
-  
-  write_col_index[1] <= write_col_index[0];
-  if (s00_axi_aresetn == 0) begin
-    write_data <= 0;
-  end
-  else begin
-    write_data <= {add_result , write_data[8 +: 24]};
-  end
-  write_enable[2] <= write_enable[1];
-  write_roll <= state == Init_compute || state == Idle ? 0 : write_roll + write_enable[1];
+  mem_col_data_addr <= mem_read_col;
+  pixel_ready <= state == Compute;
+  mem_write_enable <= 0;
 end
 
 always @(posedge s00_axi_aclk) begin
   if (s00_axi_aresetn == 0) begin
-    hw_done <= 0;
-    mem_active <= 0;
     state <= Idle;
-    write_enable[0] <= 0;
+    mem_to_write <= 0;
+    mem_active <= 0;
+    hw_done <= 0;
   end
   else begin
+    mem_active <= 0;
+    hw_done <= 0;
     case (state)
       Idle: begin
-        hw_done <= 0;
-        mem_active <= 0;
-        if (hw_active) begin
-          if (to_write == 0) state <= Init_read;
-          else state <= Init_compute;
-        end
+        if (hw_active) state <= Try_read;
+        else state <= Idle;
+      end
+      Try_read: begin
+        if (feature[0] == 1) state <= Init_read;
+        else state <= Try_compute;
       end
       Init_read: begin
+        mem_to_write <= 0;
         mem_active <= 1;
+        mem_len_copy <= len_copy;
         state <= Reading;
       end
       Reading: begin
-        if (mem_done) begin
-          hw_done <= 1;
-          state <= Done;
-        end
+        if (mem_done) state <= Try_compute;
+        else state <= Reading;
+      end
+      Try_compute: begin
+        if (feature[1] == 1) state <= Init_compute;
+        else state <= Init_write_face;
       end
       Init_compute: begin
-        read_col_index <= 0;
-        write_enable[0] <= 1;
         state <= Compute;
+        mem_read_col <= 0;
       end
       Compute: begin
-        if (read_col_index == len_copy - 1) begin
-          write_enable[0] <= 0;
-          state <= Finish_compute;
-        end
-        read_col_index <= read_col_index + 1;
+        mem_read_col <= mem_read_col + 1;
+        if (mem_read_col == len_copy-1) state <= Finish_compute;
+        else state <= Compute;
       end
       Finish_compute: begin
-        if (write_enable[2] == 0) begin
-          state <= Init_write;
-        end
+        if (sad_col_out == len_copy-1 && sad_valid) state <= Done;
+        else state <= Finish_compute;
       end
-      Init_write: begin
-        mem_active <= 1;
-        state <= Write;
+      Init_write_face: begin
+        state <= Write_face;
+        mem_read_col <= 0;
       end
-      Write: begin
-        if (mem_done) begin
-          hw_done <= 1;
-          state <= Done;
-        end
+      Write_face: begin
+        mem_read_col <= mem_read_col + 1;
+        if (mem_col_data_addr == len_copy-1) state <= Done;
+        else state <= Write_face;
       end
       Done: begin
-        hw_done <= 0;
-        state <= Idle;
+        hw_done <= 1;
+        state <= Done2;
       end
+      Done2: state <= Idle;
     endcase
   end
 end

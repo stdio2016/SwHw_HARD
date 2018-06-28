@@ -38,7 +38,7 @@ module fake_ram #
 		input wire  s_axi_rready
   );
 
-reg [31:0] mem[0:2047];
+reg [31:0] mem[0:600000];
 reg [31:0] raddr;
 reg [8:0] rburst;
 reg [2:0] delay;
@@ -52,9 +52,20 @@ wire yes2;
 assign yes2 = wdelay == 0 && s_axi_wvalid;
 
 // fill pattern in memory
-integer i;
-initial for (i = 0; i < 2048; i = i+1) begin
-  mem[i] = i*4 * 100;
+integer i, j;
+reg [31:0] r32;
+initial begin
+  $readmemh("C:/Users/User/Documents/HW/hard/swonly/group.dat", mem);
+  $readmemh("C:/Users/User/Documents/HW/hard/swonly/face.dat", mem, 1920*1080/4);
+  /*for (i = 0; i < 32; i=i+1) begin
+    for (j = 0; j < 16; j=j+1) begin
+      mem[i*16+j] = 0;
+    end
+  end
+  mem[1] = 1;
+  for (i = 0; i < 256; i=i+1) begin
+    mem[10000+i] = 32'h01010101;
+  end*/
 end
 
 // get read address
@@ -70,7 +81,7 @@ always @(posedge s_axi_aclk) begin
     s_axi_arready <= s_axi_arvalid && !s_axi_arready;
     rburst <= s_axi_arvalid ? s_axi_arlen + 1 : (
       s_axi_rvalid && s_axi_rready ? rburst - 1 : rburst);
-    if (s_axi_arready) $display("start read burst");
+    //if (s_axi_arready) $display("start read burst");
   end
 end
 
@@ -89,7 +100,7 @@ always @(posedge s_axi_aclk) begin
       s_axi_rlast <= rburst == 1;
     end
     else if (s_axi_rvalid && s_axi_rready) begin
-      $display("read at %d = %d", raddr, s_axi_rdata);
+      //$display("read at %d = %d", raddr, s_axi_rdata);
       s_axi_rvalid <= 0;
       delay <= &raddr[3:2] ? 3 : 1;
       s_axi_rlast <= 0;
@@ -107,7 +118,7 @@ end
 // write to memory
 always @(posedge s_axi_aclk) begin
   if (yes2) begin
-    $display("write to %d = %d", waddr, s_axi_wdata);
+    //$display("write to %d = %d", waddr, s_axi_wdata);
     mem[waddr>>2] <= s_axi_wdata;
   end
 end
@@ -125,7 +136,7 @@ always @(posedge s_axi_aclk) begin
     s_axi_awready <= s_axi_awvalid && !s_axi_awready;
     wburst <= s_axi_awvalid ? s_axi_awlen + 1 : (
       s_axi_wvalid && s_axi_wready ? wburst - 1 : wburst);
-    if (s_axi_awready) $display("start write burst");
+    //if (s_axi_awready) $display("start write burst");
   end
 end
 
