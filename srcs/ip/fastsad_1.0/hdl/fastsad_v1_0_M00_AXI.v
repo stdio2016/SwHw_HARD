@@ -214,6 +214,7 @@
   //write beat count in a burst
   reg [C_TRANSACTIONS_NUM : 0] 	write_index;
   reg [C_TRANSACTIONS_NUM : 0] 	write_index_next;
+  reg [C_TRANSACTIONS_NUM : 0] 	write_index_predict;
   //read beat count in a burst
   reg [C_TRANSACTIONS_NUM : 0] 	read_index;
   //size of C_M_AXI_BURST_LEN length burst in bytes
@@ -477,6 +478,17 @@ reg [MY_BUF_ADDR_WIDTH-3 : 0] read_write_base;
       write_index <= write_index_next;
     end
 
+    always @(*)
+    begin
+      if (M_AXI_ARESETN == 0 || init_txn_pulse == 1'b1 || start_single_burst_write == 1'b1)
+        begin
+          write_index_predict = 0;
+        end
+      else
+        begin
+          write_index_predict = write_index + wnext;
+        end
+    end
 
   /* Write Data Generator */
     always @(posedge M_AXI_ACLK)
@@ -484,7 +496,7 @@ reg [MY_BUF_ADDR_WIDTH-3 : 0] read_write_base;
       if (M_AXI_ARESETN == 0 || init_txn_pulse == 1)
         axi_wdata <= 0;
       else if (mst_exec_state == INIT_WRITE)
-        axi_wdata <= write_buffer[read_write_base + write_index_next];
+        axi_wdata <= write_buffer[read_write_base + write_index_predict];
       else
         axi_wdata <= axi_wdata;
     end
@@ -656,6 +668,10 @@ reg [MY_BUF_ADDR_WIDTH-3 : 0] read_write_base;
       Max_burst_size = remain_words < C_M_AXI_BURST_LEN ? remain_words : C_M_AXI_BURST_LEN;
       boundary = (13'h1000 - (addr & 13'hfff))>>2;
       Max_burst_size = Max_burst_size < boundary ? Max_burst_size : boundary;
+      Max_burst_size = Max_burst_size | (Max_burst_size>>1);
+      Max_burst_size = Max_burst_size | (Max_burst_size>>2);
+      Max_burst_size = Max_burst_size | (Max_burst_size>>4);
+      Max_burst_size = (Max_burst_size + 1) >> 1;
     end
   endfunction
 
