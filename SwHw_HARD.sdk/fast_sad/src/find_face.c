@@ -1,4 +1,4 @@
-// modified by Yi-Feng Chen on 2018/03/23
+// modified by Yi-Feng Chen on 2018/06/28
 /* ///////////////////////////////////////////////////////////////////// */
 /*  File   : find_face.c                                                 */
 /*  Author : Chun-Jen Tsai                                               */
@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include "image.h"
+#include <arm_neon.h>
 
 #include "xparameters.h"  /* SDK generated parameters */
 #include "xsdps.h"        /* for SD device driver     */
@@ -23,6 +24,8 @@
 #include "xil_cache.h"
 #include "xplatform_info.h"
 #include "xtime_l.h"
+// uncomment this to profile with real-time timer
+//#define TIMER_PROFILING
 
 /* Global Timer is always clocked at half of the CPU frequency */
 #define COUNTS_PER_USECOND  (XPAR_CPU_CORTEXA9_CORE_CLOCK_FREQ_HZ / 2000000)
@@ -37,17 +40,29 @@ long get_usec_time()
 	return (long) (time_tick / COUNTS_PER_USECOND);
 }
 
+#ifdef TIMER_PROFILING
+long ticks_to_msec(uint64_t ticks)
+{
+	return (long) (ticks / (1000 * COUNTS_PER_USECOND));
+}
+#endif
+
 /* function prototypes. */
 void median3x3(uint8 *image, int width, int height);
 int32 compute_sad(uint8 *im1, int w1, uint8 *im2, int w2, int h2, int row, int col);
 int32 match(CImage *group, CImage *face, int *posx, int *posy);
 
 // faster way of finding match
-int32 compute_sad_break(uint8 *im1, int w1, uint8 *im2, int w2, int h2, int row, int col, int32 current_min);
 int32 compute_sad_neon(uint8 *im1, int w1, uint8 *im2, int w2, int h2, int row, int col, int32 current_min);
+int32 fastsad(uint8 *image1, int w1, uint8 *image2, int row, int col);
 
 /* SD card I/O variables */
 static FATFS fatfs;
+
+#ifdef TIMER_PROFILING
+// Compute time
+uint64_t sad_time, matrix_to_array_time, insertion_sort_time;
+#endif
 
 int main(int argc, char **argv)
 {
@@ -97,6 +112,9 @@ int main(int argc, char **argv)
     tick = get_usec_time() - tick;
     printf("done in %ld msec.\n\n", tick/1000);
     printf("** Found the face at (%d, %d) with cost %ld\n\n", posx, posy, cost);
+#ifdef TIMER_PROFILING
+    printf("compute_sad takes %ldms\n", ticks_to_msec(sad_time));
+#endif
 
     /* free allocated memory */
     free(face.pix);
@@ -163,33 +181,12 @@ int32 compute_sad(uint8 *image1, int w1, uint8 *image2, int w2, int h2,
     int32 sad = 0;
 
     /* Note: the following implementation is intentionally inefficient! */
-    for (y = 0; y < h2; y++)
+    for (x = 0; x < w2; x++)
     {
-        for (x = 0; x < w2; x++)
+        for (y = 0; y < h2; y++)
         {
             /* compute the sum of absolute difference */
             sad += abs(image2[y*w2+x] - image1[(row+y)*w1+(col+x)]);
-        }
-    }
-    return sad;
-}
-
-int32 compute_sad_break(uint8 *image1, int w1, uint8 *image2, int w2, int h2,
-                  int row, int col, int32 current_min)
-{
-    int  x, y;
-    int32 sad = 0;
-
-    /* The program now runs 200% faster */
-    for (y = 0; y < h2; y++)
-    {
-        for (x = 0; x < w2; x++)
-        {
-            /* compute the sum of absolute difference */
-            sad += abs(image2[y*w2+x] - image1[(row+y)*w1+(col+x)]);
-        }
-        if (sad > current_min) { // too big, early exit
-            return sad + 1;
         }
     }
     return sad;
@@ -209,11 +206,50 @@ int32 compute_sad_neon(uint8 *image1, int w1, uint8 *image2, int w2, int h2,
         {
             /* compute the sum of absolute difference */
             //sad += abs(image2[y*w2+x] - img[y*w1+x]);
-        	sad += abs(image2[y*w2+x] - image1[(row+y)*w1+(col+x)]);
+               sad += abs(image2[y*w2+x] - image1[(row+y)*w1+(col+x)]);
         }
         if (sad > current_min) return INT32_MAX;
     }
     return sad;
+}
+
+int32 fastsad(uint8 *image1, int w1, uint8 *image2, int row, int col)
+{
+#ifdef __ARM_NEON
+    uint8x16_t f1,f2, g1,g2, dif1,dif2;
+    uint16x8_t acc1, acc2;
+    image1 += row*w1 + col;
+    acc1 = vdupq_n_u16(0);
+    acc2 = vdupq_n_u16(0);
+    g1 = vld1q_u8(image1);
+    f1 = vld1q_u8(image2);
+    g2 = vld1q_u8(image1 + 16);
+    f2 = vld1q_u8(image2 + 16);
+    int i;
+    for (i = 1; i < 32; i++) {
+        image1 += w1;
+        image2 += 32;
+        dif1 = vabdq_u8(f1, g1);
+        dif2 = vabdq_u8(f2, g2);
+        g1 = vld1q_u8(image1);
+        f1 = vld1q_u8(image2);
+        g2 = vld1q_u8(image1 + 16);
+        f2 = vld1q_u8(image2 + 16);
+        acc1 = vpadalq_u8(acc1, dif1);
+        acc2 = vpadalq_u8(acc2, dif2);
+    }
+    dif1 = vabdq_u8(f1, g1);
+    dif2 = vabdq_u8(f2, g2);
+    acc1 = vpadalq_u8(acc1, dif1);
+    acc2 = vpadalq_u8(acc2, dif2);
+    uint16x8_t some1 = vaddq_u16(acc1, acc2);
+    uint32x4_t some2 = vpaddlq_u16(some1);
+    uint32_t sads[4];
+    vst1q_u32(sads, some2);
+    return sads[0] + sads[1] + sads[2] + sads[3];
+#else
+    return compute_sad(image1, w1, image2, 32, 32, row, col);
+#endif
 }
 
 int32 match(CImage *group, CImage *face, int *posx, int *posy)
@@ -226,10 +262,20 @@ int32 match(CImage *group, CImage *face, int *posx, int *posy)
     {
         for (col = 0; col < group->width-face->width; col++)
         {
+#ifdef TIMER_PROFILING
+            uint64_t t1;
+            XTime_GetTime(&t1);
+#endif
             /* trying to compute the matching cost at (col, row) */
-            sad = compute_sad_neon(group->pix, group->width,
-                              face->pix, face->width, face->height,
-                              row, col, min_sad);
+            //sad = compute_sad_neon(group->pix, group->width,
+            //                  face->pix, face->width, face->height,
+            //                  row, col, min_sad);
+            sad = fastsad(group->pix, group->width, face->pix, row, col);
+#ifdef TIMER_PROFILING
+            uint64_t t2;
+            XTime_GetTime(&t2);
+            sad_time += t2 - t1;
+#endif
 
             /* if the matching cost is minimal, record it */
             if (sad <= min_sad)

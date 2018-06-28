@@ -1,7 +1,7 @@
 //Copyright 1986-2017 Xilinx, Inc. All Rights Reserved.
 //--------------------------------------------------------------------------------
 //Tool Version: Vivado v.2017.2 (win64) Build 1909853 Thu Jun 15 18:39:09 MDT 2017
-//Date        : Tue Jun 19 00:06:58 2018
+//Date        : Tue Jun 26 21:07:30 2018
 //Host        : DESKTOP-H1OVTOB running 64-bit major release  (build 9200)
 //Command     : generate_target design_1.bd
 //Design      : design_1
@@ -63,7 +63,7 @@ module design_1
   wire [3:0]axi_smc_M00_AXI_ARQOS;
   wire axi_smc_M00_AXI_ARREADY;
   wire [2:0]axi_smc_M00_AXI_ARSIZE;
-  wire [0:0]axi_smc_M00_AXI_ARUSER;
+  wire [4:0]axi_smc_M00_AXI_ARUSER;
   wire axi_smc_M00_AXI_ARVALID;
   wire [31:0]axi_smc_M00_AXI_AWADDR;
   wire [1:0]axi_smc_M00_AXI_AWBURST;
@@ -74,7 +74,7 @@ module design_1
   wire [3:0]axi_smc_M00_AXI_AWQOS;
   wire axi_smc_M00_AXI_AWREADY;
   wire [2:0]axi_smc_M00_AXI_AWSIZE;
-  wire [0:0]axi_smc_M00_AXI_AWUSER;
+  wire [4:0]axi_smc_M00_AXI_AWUSER;
   wire axi_smc_M00_AXI_AWVALID;
   wire axi_smc_M00_AXI_BREADY;
   wire [1:0]axi_smc_M00_AXI_BRESP;
@@ -99,7 +99,7 @@ module design_1
   wire [3:0]fastsad_0_M00_AXI_ARQOS;
   wire fastsad_0_M00_AXI_ARREADY;
   wire [2:0]fastsad_0_M00_AXI_ARSIZE;
-  wire [0:0]fastsad_0_M00_AXI_ARUSER;
+  wire [4:0]fastsad_0_M00_AXI_ARUSER;
   wire fastsad_0_M00_AXI_ARVALID;
   wire [31:0]fastsad_0_M00_AXI_AWADDR;
   wire [1:0]fastsad_0_M00_AXI_AWBURST;
@@ -111,12 +111,11 @@ module design_1
   wire [3:0]fastsad_0_M00_AXI_AWQOS;
   wire fastsad_0_M00_AXI_AWREADY;
   wire [2:0]fastsad_0_M00_AXI_AWSIZE;
-  wire [0:0]fastsad_0_M00_AXI_AWUSER;
+  wire [4:0]fastsad_0_M00_AXI_AWUSER;
   wire fastsad_0_M00_AXI_AWVALID;
   wire [0:0]fastsad_0_M00_AXI_BID;
   wire fastsad_0_M00_AXI_BREADY;
   wire [1:0]fastsad_0_M00_AXI_BRESP;
-  wire [0:0]fastsad_0_M00_AXI_BUSER;
   wire fastsad_0_M00_AXI_BVALID;
   wire [31:0]fastsad_0_M00_AXI_RDATA;
   wire [0:0]fastsad_0_M00_AXI_RID;
@@ -239,7 +238,6 @@ module design_1
         .M00_AXI_awvalid(axi_smc_M00_AXI_AWVALID),
         .M00_AXI_bready(axi_smc_M00_AXI_BREADY),
         .M00_AXI_bresp(axi_smc_M00_AXI_BRESP),
-        .M00_AXI_buser(1'b0),
         .M00_AXI_bvalid(axi_smc_M00_AXI_BVALID),
         .M00_AXI_rdata(axi_smc_M00_AXI_RDATA),
         .M00_AXI_rlast(axi_smc_M00_AXI_RLAST),
@@ -278,7 +276,6 @@ module design_1
         .S00_AXI_bid(fastsad_0_M00_AXI_BID),
         .S00_AXI_bready(fastsad_0_M00_AXI_BREADY),
         .S00_AXI_bresp(fastsad_0_M00_AXI_BRESP),
-        .S00_AXI_buser(fastsad_0_M00_AXI_BUSER),
         .S00_AXI_bvalid(fastsad_0_M00_AXI_BVALID),
         .S00_AXI_rdata(fastsad_0_M00_AXI_RDATA),
         .S00_AXI_rid(fastsad_0_M00_AXI_RID),
@@ -325,7 +322,6 @@ module design_1
         .m00_axi_bid(fastsad_0_M00_AXI_BID),
         .m00_axi_bready(fastsad_0_M00_AXI_BREADY),
         .m00_axi_bresp(fastsad_0_M00_AXI_BRESP),
-        .m00_axi_buser(fastsad_0_M00_AXI_BUSER),
         .m00_axi_bvalid(fastsad_0_M00_AXI_BVALID),
         .m00_axi_rdata(fastsad_0_M00_AXI_RDATA),
         .m00_axi_rid(fastsad_0_M00_AXI_RID),
@@ -435,7 +431,7 @@ module design_1
         .S_AXI_ACP_ARQOS(axi_smc_M00_AXI_ARQOS),
         .S_AXI_ACP_ARREADY(axi_smc_M00_AXI_ARREADY),
         .S_AXI_ACP_ARSIZE(axi_smc_M00_AXI_ARSIZE),
-        .S_AXI_ACP_ARUSER({1'b0,1'b0,1'b0,1'b0,axi_smc_M00_AXI_ARUSER}),
+        .S_AXI_ACP_ARUSER(axi_smc_M00_AXI_ARUSER),
         .S_AXI_ACP_ARVALID(axi_smc_M00_AXI_ARVALID),
         .S_AXI_ACP_AWADDR(axi_smc_M00_AXI_AWADDR),
         .S_AXI_ACP_AWBURST(axi_smc_M00_AXI_AWBURST),
@@ -447,7 +443,7 @@ module design_1
         .S_AXI_ACP_AWQOS(axi_smc_M00_AXI_AWQOS),
         .S_AXI_ACP_AWREADY(axi_smc_M00_AXI_AWREADY),
         .S_AXI_ACP_AWSIZE(axi_smc_M00_AXI_AWSIZE),
-        .S_AXI_ACP_AWUSER({1'b0,1'b0,1'b0,1'b0,axi_smc_M00_AXI_AWUSER}),
+        .S_AXI_ACP_AWUSER(axi_smc_M00_AXI_AWUSER),
         .S_AXI_ACP_AWVALID(axi_smc_M00_AXI_AWVALID),
         .S_AXI_ACP_BREADY(axi_smc_M00_AXI_BREADY),
         .S_AXI_ACP_BRESP(axi_smc_M00_AXI_BRESP),
