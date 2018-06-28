@@ -191,7 +191,7 @@ initial begin
   read(0*4, ans);
   while (ans != 0) read(0*4, ans);
   
-  for (i = 0; i < 32; i=i+1) begin
+  for (i = 0; i < 100; i=i+1) begin
     write(1*4, 3);
     write(2*4, 64);
     write(3*4, 1920*i);
