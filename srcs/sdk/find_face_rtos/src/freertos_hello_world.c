@@ -54,6 +54,20 @@ long RxtaskCntr = 0;
 #include "xil_cache.h"
 #include "xplatform_info.h"
 #include "xtime_l.h"
+// uncomment this to profile with real-time timer
+#define TIMER_PROFILING
+
+// set photo file name here
+const char *groupname = "group.pgm";
+
+// set face file name here
+#define FACE_COUNT 4
+const char *facename[FACE_COUNT] = {
+    "face1.pgm",
+    "face2.pgm",
+    "face3.pgm",
+    "face4.pgm"
+};
 
 /* Global Timer is always clocked at half of the CPU frequency */
 #define COUNTS_PER_USECOND  (XPAR_CPU_CORTEXA9_CORE_CLOCK_FREQ_HZ / 2000000)
@@ -68,6 +82,13 @@ long get_usec_time()
 	return (long) (time_tick / COUNTS_PER_USECOND);
 }
 
+#ifdef TIMER_PROFILING
+long ticks_to_msec(uint64_t ticks)
+{
+	return (long) (ticks / (1000 * COUNTS_PER_USECOND));
+}
+#endif
+
 /* function prototypes. */
 void median3x3(uint8 *image, int width, int height);
 int32 compute_sad(uint8 *im1, int w1, uint8 *im2, int w2, int h2, int row, int col);
@@ -78,36 +99,43 @@ int32 compute_sad_hw(uint8 *im1, int w1, uint8 *im2, int w2, int h2, int row, in
 /* SD card I/O variables */
 static FATFS fatfs;
 
+#ifdef TIMER_PROFILING
+// Compute time
+uint64_t transfer_time, run_time;
+#endif
+
 int main(int argc, char **argv)
 {
-    CImage group, face;
+    CImage group, face[FACE_COUNT];
     int  width, height;
     int  posx, posy;
     int32 cost;
     long tick;
 
     /* Initialize the SD card driver. */
-	if (f_mount(&fatfs, "0:/", 0))
-	{
-		return XST_FAILURE;
-	}
+    if (f_mount(&fatfs, "0:/", 0))
+    {
+        return XST_FAILURE;
+    }
 
     printf("1. Reading images ... ");
     tick = get_usec_time();
 
     /* Read the group image file into the DDR main memory */
-    if (read_pnm_image("group.pgm", &group))
+    if (read_pnm_image(groupname, &group))
     {
         printf("\nError: cannot read the group.pgm image.\n");
     	return 1;
     }
     width = group.width, height = group.height;
 
-    /* Reading the 32x32 target face image into main memory */
-    if (read_pnm_image("face.pgm", &face))
-    {
-        printf("\nError: cannot read the face.pgm image.\n");
-    	return 1;
+    for (int i = 0; i < 4; i++) {
+        /* Reading the 32x32 target face image into main memory */
+        if (read_pnm_image(facename[i], &face[i]))
+        {
+            printf("\nError: cannot read the face.pgm image.\n");
+            return 1;
+        }
     }
     tick = get_usec_time() - tick;
     printf("done in %ld msec.\n", tick/1000);
@@ -120,15 +148,24 @@ int main(int argc, char **argv)
     printf("done in %ld msec.\n", tick/1000);
 
     /* Perform face-matching */
-    printf("3. Face-matching ... ");
-    tick = get_usec_time();
-    cost = match(&group, &face, &posx, &posy);
-    tick = get_usec_time() - tick;
-    printf("done in %ld msec.\n\n", tick/1000);
-    printf("** Found the face at (%d, %d) with cost %ld\n\n", posx, posy, cost);
+    printf("3. Face-matching ... \n");
+    for (int i = 0; i < FACE_COUNT; i++) {
+        printf("\t(%d) Match \"%s\": ", i, facename[i]);
+        tick = get_usec_time();
+        cost = match(&group, &face[i], &posx, &posy);
+        tick = get_usec_time() - tick;
+        printf("done in %ld msec.\n", tick/1000);
+        printf("** Found the face at (%d, %d) with cost %ld\n", posx, posy, cost);
+#ifdef TIMER_PROFILING
+        printf("transfer takes %ldms\n", ticks_to_msec(transfer_time));
+        transfer_time = 0;
+        printf("hardware run takes %ldms\n", ticks_to_msec(run_time));
+        run_time = 0;
+#endif
 
-    /* free allocated memory */
-    free(face.pix);
+        /* free allocated memory */
+        free(face[i].pix);
+    }
     free(group.pix);
 
     return 0;
@@ -217,12 +254,26 @@ int32 compute_sad_hw(uint8 *image1, int w1, uint8 *image2, int w2, int h2,
 
     for (y = 0; y < h2; y++)
     {
+#ifdef TIMER_PROFILING
+        XTime t1, t2, t3;
+        XTime_GetTime(&t1);
+#endif
         memmove(group, image1+(row+y)*w1+col, 32);
         memmove(face, image2+y*w2, 32);
+#ifdef TIMER_PROFILING
+        XTime_GetTime(&t2);
+#endif
         *hw_active = 1;
         while (*hw_active == 1) ; // busy wait
+#ifdef TIMER_PROFILING
+        XTime_GetTime(&t3);
+#endif
 
         sad += *result;
+#ifdef TIMER_PROFILING
+        transfer_time += t2 - t1;
+        run_time += t3 - t2;
+#endif
         if (sad > minsad) return INT32_MAX;
     }
     return sad;
