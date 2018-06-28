@@ -8,69 +8,30 @@
 這個程式在找匹配之前，會對照片用 3x3 median filtering 預處理。
 計算匹配度的方法是計算兩張圖形之間的 SAD (Sum of Absolute Difference)，也就是把對應的像素相減之後取絕對值，然後把這些絕對值加總。
 SAD 越小，就表示圖形越相似。
+
 「find_face」是純軟體，而且沒有做優化，因此有效能上的問題。
 我可以利用 Lab1 所學的方法來尋找效能瓶頸，並嘗試用 ZedBoard 上的資源來加速，接著說明各種方法的效果以及資源使用率。
-在 Lab 6 裡，我們會需要從一張照片裡找 4 張臉。
 
-## 二、尋找效能瓶頸
-在 Lab1 時，我有嘗試檢測效能，然而我當時使用實時時鐘 (real-time timer) 的方法有問題。
-我決定計時的函數有 `matrix_to_array`、`insertion_sort` 和 `compute_sad`，加上老師已經計時的 `median3x3` 和 `match`。
-計時的方法是使用 `XTime_GetTime` 取得 real-time timer 的時間，在每個呼叫子程序的位置前後都加上 `XTime_GetTime`，然後相減得到子程序的執行時間。
+在 Lab 6 裡，我們會需要從一張照片裡找 4 張臉，因此優化顯得更為重要。
 
-用 Release 模式來編譯的話，原始程式的執行結果是
-```
-1. Reading images ... done in 987 msec.
-2. Median filtering ... done in 979 msec.
-3. Face-matching ... done in 20251 msec.
+## 二、概念
+由 Lab 1 的結果 [\[3\]](#f3) 可以得知 `compute_sad` 是原始程式的效能瓶頸，因此優化應該先從 `compute_sad` 開始。
+Lab 2 則說明硬體加速時，瓶頸經常會出現在軟體和硬體的溝通。
+Lab 3 提出一種減少軟體和硬體溝通成本的方法。
+Lab 4 介紹如何用可程式化邏輯來直接存取記憶體 (DMA)。
+Lab 5 說明如何實作硬體互斥鎖 (mutex)。
 
-** Found the face at (881, 826) with cost 3080
-```
-可見得老師已經寫好部份程序的計時。
-
-加上 `matrix_to_array`、`insertion_sort` 和 `compute_sad` 的計時程式後，得到結果是
-```
-1. Reading images ... done in 983 msec.
-2. Median filtering ... done in 1305 msec.
-matrix_to_array takes 184ms
-insertion_sort takes 959ms
-3. Face-matching ... done in 20502 msec.
-
-** Found the face at (881, 826) with cost 3080
-
-compute_sad takes 20364ms
-```
-我發現計時程式有開銷 (overhead)，而且對 Median filtering 運算時間的影響已經不能忽略，大約 33%。
-但是我發現，`compute_sad` 子程序花費的時間是我觀察的子程序裡花費最大的，所以我應該試圖優化它。
-
-如果我在 `compute_sad` 的最內層計時，那會得到以下的結果
-```
-1. Reading images ... done in 984 msec.
-2. Median filtering ... done in 1305 msec.
-matrix_to_array takes 184ms
-insertion_sort takes 959ms
-3. Face-matching ... done in 230858 msec.
-
-** Found the face at (881, 826) with cost 3080
-
-compute_sad takes 230704ms
-inner loop in compute_sad takes 101015ms
-```
-overhead 之大，導致大部分的時間都在計時了，而且這麼做有可能破壞編譯器的優化，所以我不能用這種方法計算 `compute_sad` 最內層迴圈的花費。
+我的優化將會先從軟體開始，再進入硬體加速，途中還會提到各次 Lab 得到的結果。
 
 ## 三、軟體加速
-既然找出熱點 (hotspot) 是 `compute_sad`，那就來優化吧。
 
 ### 1. 我做 Lab1 提出的方法
-
 在 Lab1 時，我把 compute_sad 程式設計成，若加總的過程，超過已找到的最小值，則跳出 compute_sad，以節省計算時間。
-我還利用 Arm 的單指令流多資料流 (SIMD) 指令來加速。
-Zedboard 上的處理器能夠支援 Arm 目前的最新 SIMD 技術，NEON。[\[3\]](#f3)
-利用 gcc 編譯器的向量化優化，可以使程式使用 NEON 指令集，從而加速程式。
+我還利用 gcc 編譯器的向量化優化，使程式使用 NEON 指令集，從而加速程式。
 我使用的編譯器參數是 `-O3 -mfpu=neon`，`-O3` 表示優化等級，`-mfpu=neon` 表示目標支援 NEON，可以用 NEON 優化。
 [\[1\]](#f1)
 
 ### 2. 自己寫 NEON intrinsics
-
 參考 Arm 的官方文件 [\[2\]](#f2)，以及 gcc 的編譯結果後，我覺得我可以做的比 gcc 的自動向量化更好，所以我就自己寫 NEON intrinsics。
 我的程式利用了臉的圖案總是 32x32 的特性，來優化 `compute_sad` 子程序。以下描述我的作法
 1. 用 `vld1q_u8` 讀取一列的圖形，由於 `vld1q_u8` 可一次載入 16 個位元組，因此只要 4 次 `vld1q_u8` 就可以載入一列的臉和待比對的圖形。
@@ -90,19 +51,57 @@ Zedboard 上的處理器能夠支援 Arm 目前的最新 SIMD 技術，NEON。[\
 
 其中必須要講的是，方法 2 並沒有指定優化的等級，所以我測試了幾種等級，結果發現，雖然 `-Os` 為了減少程式大小，會使大部分的程式變慢，但是卻讓 face matching 變快了，是三個測試過的等級裡最快的。
 ## 四、硬體加速
+軟體加速已經到了極致，接著來試試硬體加速。
+這裡會把之前的 Lab 拿出來研究，以更了解軟硬體整合後的瓶頸。
+由於 Lab 6 需要找 4 張臉，因此以下的測試會搜尋 4 張臉，而不是一張臉。
+
+### 1. Lab 2 的設計
+因為 `compute_sad` 即使軟體加速後，依然是效能瓶頸，所以就會想把 `compute_sad` 丟給硬體做。
+因為可程式化邏輯和處理器使用的記憶體不同，所以需要做資料傳輸。
+
+在這個設計中，硬體的輸入就是照片和臉部圖片各取其中一列的 32 個項素，輸出則是這 32 個像素的 SAD，並使用忙碌等待 (busy loop) 作為軟體和硬體的同步機制。
+
+使用同學提供的臉部圖案後的計算結果
+
+| 臉部圖片  | 匹配時間 |
+| --------- | --------:|
+| face1.pgm | 169047ms |
+| face2.pgm | 141240ms |
+| face3.pgm | 162243ms |
+| face4.pgm | 103909ms |
+
+怎麼變慢了呢？
+用 realtime timer 檢查硬體的花費：
+
+| 臉部圖片  | 傳輸     | 硬體運算 | 匹配時間 |
+| --------- | --------:| --------:| --------:|
+| face1.pgm | 157720ms |   9250ms | 172857ms |
+| face2.pgm | 131751ms |   7726ms | 144418ms |
+| face3.pgm | 151368ms |   8877ms | 165902ms |
+| face4.pgm |  96886ms |   5681ms | 106236ms |
+
+發現大部分的時間都花在傳輸資料。
+
+### 2. 減少軟體和硬體之間的資料傳輸
+因為傳輸資料實在太慢，所以必須想辦法減少需要傳輸的資料。
+在 Lab 3 裡，提到一種方法可以減少傳輸，那就是，重新排列搜尋臉的方向。
+如果搜尋臉的方向是往下找，遇到底就回到最上並右移一格，則在往下一格的時候
+而且在尋找一張臉的時候，臉的圖案不會變，所以不用每搜尋一個
 
 ## 參考資料
 <p id='f1'>
 [1] Richard M. Stallman et al., "Using the GNU Compiler Collection".
  Free Software Foundation, Boston.
-網址：https://gcc.gnu.org/onlinedocs/gcc-5.5.0/gcc/ARM-Options.html#ARM-Options
+https://gcc.gnu.org/onlinedocs/gcc-5.5.0/gcc/.
+擷取日期：2018/06/28
 </p>
 <p id='f2'>
 [2] ARM Informaion Center, "ARM Compiler toolchain Compiler Reference".
 Arm Limited. 1995-2018.
-取自網頁：http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0491f/BABEDJFB.html
+http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0491f/BABEDJFB.html.
+擷取日期：2018/06/27
 </p>
 <p id='f3'>
-[3]
-http://zedboard.org/content/zedboard-0
+[3] 陳羿豐，「軟硬體協同設計 Lab 1 報告」。
+2018。
 </p>
