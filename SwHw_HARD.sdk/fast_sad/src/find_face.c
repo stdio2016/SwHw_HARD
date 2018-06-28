@@ -27,6 +27,18 @@
 // uncomment this to profile with real-time timer
 //#define TIMER_PROFILING
 
+// set photo file name here
+const char *groupname = "group.pgm";
+
+// set face file name here
+#define FACE_COUNT 4
+const char *facename[FACE_COUNT] = {
+    "face1.pgm",
+    "face2.pgm",
+    "face3.pgm",
+    "face4.pgm"
+};
+
 /* Global Timer is always clocked at half of the CPU frequency */
 #define COUNTS_PER_USECOND  (XPAR_CPU_CORTEXA9_CORE_CLOCK_FREQ_HZ / 2000000)
 #define FREQ_MHZ ((XPAR_CPU_CORTEXA9_CORE_CLOCK_FREQ_HZ+500000)/1000000)
@@ -66,34 +78,36 @@ uint64_t sad_time, matrix_to_array_time, insertion_sort_time;
 
 int main(int argc, char **argv)
 {
-    CImage group, face;
+    CImage group, face[FACE_COUNT];
     int  width, height;
     int  posx, posy;
     int32 cost;
     long tick;
 
     /* Initialize the SD card driver. */
-	if (f_mount(&fatfs, "0:/", 0))
-	{
-		return XST_FAILURE;
-	}
+    if (f_mount(&fatfs, "0:/", 0))
+    {
+        return XST_FAILURE;
+    }
 
     printf("1. Reading images ... ");
     tick = get_usec_time();
 
     /* Read the group image file into the DDR main memory */
-    if (read_pnm_image("group.pgm", &group))
+    if (read_pnm_image(groupname, &group))
     {
         printf("\nError: cannot read the group.pgm image.\n");
     	return 1;
     }
     width = group.width, height = group.height;
 
-    /* Reading the 32x32 target face image into main memory */
-    if (read_pnm_image("face.pgm", &face))
-    {
-        printf("\nError: cannot read the face.pgm image.\n");
-    	return 1;
+    for (int i = 0; i < 4; i++) {
+        /* Reading the 32x32 target face image into main memory */
+        if (read_pnm_image(facename[i], &face[i]))
+        {
+            printf("\nError: cannot read the face.pgm image.\n");
+            return 1;
+        }
     }
     tick = get_usec_time() - tick;
     printf("done in %ld msec.\n", tick/1000);
@@ -106,18 +120,21 @@ int main(int argc, char **argv)
     printf("done in %ld msec.\n", tick/1000);
 
     /* Perform face-matching */
-    printf("3. Face-matching ... ");
-    tick = get_usec_time();
-    cost = match(&group, &face, &posx, &posy);
-    tick = get_usec_time() - tick;
-    printf("done in %ld msec.\n\n", tick/1000);
-    printf("** Found the face at (%d, %d) with cost %ld\n\n", posx, posy, cost);
+    printf("3. Face-matching ... \n");
+    for (int i = 0; i < FACE_COUNT; i++) {
+        printf("\t(%d) Match \"%s\": ", i, facename[i]);
+        tick = get_usec_time();
+        cost = match(&group, &face[i], &posx, &posy);
+        tick = get_usec_time() - tick;
+        printf("done in %ld msec.\n", tick/1000);
+        printf("** Found the face at (%d, %d) with cost %ld\n", posx, posy, cost);
 #ifdef TIMER_PROFILING
-    printf("compute_sad takes %ldms\n", ticks_to_msec(sad_time));
+        printf("compute_sad takes %ldms\n", ticks_to_msec(sad_time));
 #endif
 
-    /* free allocated memory */
-    free(face.pix);
+        /* free allocated memory */
+        free(face[i].pix);
+    }
     free(group.pix);
 
     return 0;
