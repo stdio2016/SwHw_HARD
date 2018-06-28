@@ -1,4 +1,4 @@
-// modified by Yi-Feng Chen on 2018/03/23
+// modified by Yi-Feng Chen on 2018/06/28
 /* ///////////////////////////////////////////////////////////////////// */
 /*  File   : find_face.c                                                 */
 /*  Author : Chun-Jen Tsai                                               */
@@ -24,6 +24,8 @@
 #include "xil_cache.h"
 #include "xplatform_info.h"
 #include "xtime_l.h"
+// uncomment this to profile with real-time timer
+//#define TIMER_PROFILING
 
 /* Global Timer is always clocked at half of the CPU frequency */
 #define COUNTS_PER_USECOND  (XPAR_CPU_CORTEXA9_CORE_CLOCK_FREQ_HZ / 2000000)
@@ -38,10 +40,12 @@ long get_usec_time()
 	return (long) (time_tick / COUNTS_PER_USECOND);
 }
 
+#ifdef TIMER_PROFILING
 long ticks_to_msec(uint64_t ticks)
 {
 	return (long) (ticks / (1000 * COUNTS_PER_USECOND));
 }
+#endif
 
 /* function prototypes. */
 void median3x3(uint8 *image, int width, int height);
@@ -49,14 +53,16 @@ int32 compute_sad(uint8 *im1, int w1, uint8 *im2, int w2, int h2, int row, int c
 int32 match(CImage *group, CImage *face, int *posx, int *posy);
 
 // faster way of finding match
-int32 compute_sad_break(uint8 *im1, int w1, uint8 *im2, int w2, int h2, int row, int col, int32 current_min);
 int32 compute_sad_neon(uint8 *im1, int w1, uint8 *im2, int w2, int h2, int row, int col, int32 current_min);
+int32 fastsad(uint8 *image1, int w1, uint8 *image2, int row, int col);
 
 /* SD card I/O variables */
 static FATFS fatfs;
 
+#ifdef TIMER_PROFILING
 // Compute time
 uint64_t sad_time, matrix_to_array_time, insertion_sort_time;
+#endif
 
 int main(int argc, char **argv)
 {
@@ -98,10 +104,6 @@ int main(int argc, char **argv)
     median3x3(group.pix, width, height);
     tick = get_usec_time() - tick;
     printf("done in %ld msec.\n", tick/1000);
-#ifdef TIMER_PROFILING
-    printf("matrix_to_array takes %ldms\n", ticks_to_msec(matrix_to_array_time));
-    printf("insertion_sort takes %ldms\n", ticks_to_msec(insertion_sort_time));
-#endif
 
     /* Perform face-matching */
     printf("3. Face-matching ... ");
@@ -111,7 +113,7 @@ int main(int argc, char **argv)
     printf("done in %ld msec.\n\n", tick/1000);
     printf("** Found the face at (%d, %d) with cost %ld\n\n", posx, posy, cost);
 #ifdef TIMER_PROFILING
-    printf("compute_sad takes %ldms\n\n", ticks_to_msec(sad_time));
+    printf("compute_sad takes %ldms\n", ticks_to_msec(sad_time));
 #endif
 
     /* free allocated memory */
@@ -159,31 +161,15 @@ void median3x3(uint8 *image, int width, int height)
 {
     int   row, col;
     uint8 pix_array[9], *ptr;
-#ifdef TIMER_PROFILING
-    uint64_t t1, t2, t3;
-#endif
 
     for (row = 1; row < height-1; row++)
     {
         for (col = 1; col < width-1; col++)
         {
             ptr = image + row*width + col;
-#ifdef TIMER_PROFILING
-            XTime_GetTime(&t1);
-#endif
             matrix_to_array(pix_array, ptr, width);
-#ifdef TIMER_PROFILING
-            XTime_GetTime(&t2);
-#endif
             insertion_sort(pix_array, 9);
-#ifdef TIMER_PROFILING
-            XTime_GetTime(&t3);
-#endif
             *ptr = pix_array[4];
-#ifdef TIMER_PROFILING
-            matrix_to_array_time += t2 - t1;
-            insertion_sort_time += t3 - t2;
-#endif
         }
     }
 }
@@ -195,33 +181,12 @@ int32 compute_sad(uint8 *image1, int w1, uint8 *image2, int w2, int h2,
     int32 sad = 0;
 
     /* Note: the following implementation is intentionally inefficient! */
-    for (y = 0; y < h2; y++)
+    for (x = 0; x < w2; x++)
     {
-        for (x = 0; x < w2; x++)
+        for (y = 0; y < h2; y++)
         {
             /* compute the sum of absolute difference */
             sad += abs(image2[y*w2+x] - image1[(row+y)*w1+(col+x)]);
-        }
-    }
-    return sad;
-}
-
-int32 compute_sad_break(uint8 *image1, int w1, uint8 *image2, int w2, int h2,
-                  int row, int col, int32 current_min)
-{
-    int  x, y;
-    int32 sad = 0;
-
-    /* The program now runs 200% faster */
-    for (y = 0; y < h2; y++)
-    {
-        for (x = 0; x < w2; x++)
-        {
-            /* compute the sum of absolute difference */
-            sad += abs(image2[y*w2+x] - image1[(row+y)*w1+(col+x)]);
-        }
-        if (sad > current_min) { // too big, early exit
-            return sad + 1;
         }
     }
     return sad;
@@ -241,7 +206,7 @@ int32 compute_sad_neon(uint8 *image1, int w1, uint8 *image2, int w2, int h2,
         {
             /* compute the sum of absolute difference */
             //sad += abs(image2[y*w2+x] - img[y*w1+x]);
-        	sad += abs(image2[y*w2+x] - image1[(row+y)*w1+(col+x)]);
+               sad += abs(image2[y*w2+x] - image1[(row+y)*w1+(col+x)]);
         }
         if (sad > current_min) return INT32_MAX;
     }
