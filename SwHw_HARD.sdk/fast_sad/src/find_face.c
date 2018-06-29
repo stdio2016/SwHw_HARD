@@ -1,4 +1,4 @@
-// modified by Yi-Feng Chen on 2018/06/28
+// modified by Yi-Feng Chen on 2018/06/29
 /* ///////////////////////////////////////////////////////////////////// */
 /*  File   : find_face.c                                                 */
 /*  Author : Chun-Jen Tsai                                               */
@@ -26,6 +26,7 @@
 #include "xtime_l.h"
 // uncomment this to profile with real-time timer
 //#define TIMER_PROFILING
+#define FastSAD_Addr  XPAR_FASTSAD_0_S00_AXI_BASEADDR
 
 // set photo file name here
 const char *groupname = "group.pgm";
@@ -67,6 +68,7 @@ int32 match(CImage *group, CImage *face, int *posx, int *posy);
 // faster way of finding match
 int32 compute_sad_neon(uint8 *im1, int w1, uint8 *im2, int w2, int h2, int row, int col, int32 current_min);
 int32 fastsad(uint8 *image1, int w1, uint8 *image2, int row, int col);
+int32 fastsad_hw(CImage *group, CImage *face, int *posx, int *posy);
 
 /* SD card I/O variables */
 static FATFS fatfs;
@@ -124,7 +126,8 @@ int main(int argc, char **argv)
     for (int i = 0; i < FACE_COUNT; i++) {
         printf("\t(%d) Match \"%s\": ", i, facename[i]);
         tick = get_usec_time();
-        cost = match(&group, &face[i], &posx, &posy);
+        //cost = match(&group, &face[i], &posx, &posy);
+        cost = fastsad_hw(&group, &face[i], &posx, &posy);
         tick = get_usec_time() - tick;
         printf("done in %ld msec.\n", tick/1000);
         printf("** Found the face at (%d, %d) with cost %ld\n", posx, posy, cost);
@@ -303,4 +306,49 @@ int32 match(CImage *group, CImage *face, int *posx, int *posy)
         }
     }
     return min_sad;
+}
+
+// hardware interface
+volatile int *hw_active = (int *) FastSAD_Addr;
+volatile int *to_write = (int *) (FastSAD_Addr+4);
+volatile int *len_copy = (int *) (FastSAD_Addr+8);
+uint8_t * volatile *src_addr = (uint8_t **) (FastSAD_Addr+12);
+// currently unused
+//uint8_t * volatile *dst_addr = (uint8_t **) (FastSAD_Addr+16);
+volatile int *dst_row = (int *) (FastSAD_Addr+20);
+volatile int *face_select = (int *) (FastSAD_Addr+24);
+// slv_reg7 is reserved
+volatile int *min_sad = (int *) (FastSAD_Addr+32);
+volatile int *min_sad_pos = (int *) (FastSAD_Addr+36);
+
+// accelerate!
+int32 fastsad_hw(CImage *group, CImage *face, int *posx, int *posy) {
+    // store face
+    *to_write = 1; // means "write face"
+    *len_copy = 1024;
+    *src_addr = face->pix;
+    *dst_row = 0;
+    *face_select = 0;
+    *hw_active = 1;
+    while (*hw_active != 0) ;
+
+    // actually compute minimum SAD
+    int minimum = INT32_MAX;
+    for (int i = 0; i < group->height; i++) {
+        *to_write = 3; // means "read a row and calculate SAD"
+        *len_copy = group->width;
+        *src_addr = group->pix + (group->width * i);
+        *dst_row = i;
+        *face_select = 0;
+        for (*hw_active = 1; *hw_active != 0; ) ;
+        if (i >= 31) {
+            int current = *min_sad;
+            if (current <= minimum) {
+                minimum = current;
+                *posx = *min_sad_pos - 31;
+                *posy = i - 31;
+            }
+        }
+    }
+    return minimum;
 }
