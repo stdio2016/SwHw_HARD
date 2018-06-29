@@ -153,6 +153,7 @@ always @(*) begin
       state_next = face_rd_row_idx == 0 ? Changing2 : Changing;
     end
     Changing2: state_next = No_Change;
+    default: state_next = No_Change;
   endcase
 end
 
