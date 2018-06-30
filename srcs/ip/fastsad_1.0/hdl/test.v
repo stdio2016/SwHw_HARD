@@ -2,7 +2,7 @@
 
 module test;
 // reference: https://github.com/frobino/axi_custom_ip_tb
-parameter integer C_S_AXI_ADDR_WIDTH	= 5;
+parameter integer C_S_AXI_ADDR_WIDTH	= 6;
 
 reg clock = 1;
 reg reset = 0;
@@ -172,44 +172,39 @@ task read;
 endtask
 
 initial begin
-  repeat (10000) #5 clock = ~clock;
+  repeat (2400000) #5 clock = ~clock;
   $finish;
 end
 
 integer ans;
+integer i;
 initial begin
   @(posedge clock);
   reset <= 1;
   @(posedge clock);
-  $display("test: read into row 0");
-  write(4, 0); // to_write
-  write(8, 32); // len_copy
-  write(12, 4092); // src_addr
-  write(20, 0); // dst_row
+  write(1*4, 1);
+  write(2*4, 1024);
+  write(3*4, 1920*1080);
+  write(5*4, 0);
+  write(6*4, 0);
+  write(0*4, 1);
+  read(0*4, ans);
+  while (ans != 0) read(0*4, ans);
   
-  write(0, 1); // hw_active
-  read(0, ans);
-  while (ans == 1) read(0, ans);
-
-  $display("test: read into row 1");
-  write(4, 0); // to_write
-  write(8, 32); // len_copy
-  write(12, 4092); // src_addr
-  write(20, 1); // dst_row
-  
-  write(0, 1); // hw_active
-  read(0, ans);
-  while (ans == 1) read(0, ans);
-  
-  $display("test: write");
-  write(4, 1); // to_write
-  write(8, 32); // len_copy
-  write(16, 4092); //dst_addr
-  
-  write(0, 1); // hw_active
-  read(0, ans);
-  while (ans == 1) read(0, ans);
-
+  for (i = 0; i < 100; i=i+1) begin
+    write(1*4, 3);
+    write(2*4, 64);
+    write(3*4, 1920*i);
+    write(5*4, i);
+    write(6*4, 0);
+    write(0*4, 1);
+    read(0*4, ans);
+    while (ans != 0) read(0*4, ans);
+    read(8*4, ans);
+    $display("row %d min_sad=%d", i, ans);
+    read(9*4, ans);
+    $display("at %d", ans);
+  end
   $display("Finish!!");
   $finish;
 end

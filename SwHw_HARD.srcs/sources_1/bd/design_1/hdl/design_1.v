@@ -1,7 +1,7 @@
 //Copyright 1986-2017 Xilinx, Inc. All Rights Reserved.
 //--------------------------------------------------------------------------------
 //Tool Version: Vivado v.2017.2 (win64) Build 1909853 Thu Jun 15 18:39:09 MDT 2017
-//Date        : Tue Jun 26 21:07:30 2018
+//Date        : Fri Jun 29 08:47:17 2018
 //Host        : DESKTOP-H1OVTOB running 64-bit major release  (build 9200)
 //Command     : generate_target design_1.bd
 //Design      : design_1
@@ -337,12 +337,12 @@ module design_1
         .m00_axi_wuser(fastsad_0_M00_AXI_WUSER),
         .m00_axi_wvalid(fastsad_0_M00_AXI_WVALID),
         .s00_axi_aclk(processing_system7_0_FCLK_CLK0),
-        .s00_axi_araddr(ps7_0_axi_periph_M00_AXI_ARADDR[4:0]),
+        .s00_axi_araddr(ps7_0_axi_periph_M00_AXI_ARADDR[5:0]),
         .s00_axi_aresetn(rst_ps7_0_100M_peripheral_aresetn),
         .s00_axi_arprot(ps7_0_axi_periph_M00_AXI_ARPROT),
         .s00_axi_arready(ps7_0_axi_periph_M00_AXI_ARREADY),
         .s00_axi_arvalid(ps7_0_axi_periph_M00_AXI_ARVALID),
-        .s00_axi_awaddr(ps7_0_axi_periph_M00_AXI_AWADDR[4:0]),
+        .s00_axi_awaddr(ps7_0_axi_periph_M00_AXI_AWADDR[5:0]),
         .s00_axi_awprot(ps7_0_axi_periph_M00_AXI_AWPROT),
         .s00_axi_awready(ps7_0_axi_periph_M00_AXI_AWREADY),
         .s00_axi_awvalid(ps7_0_axi_periph_M00_AXI_AWVALID),
